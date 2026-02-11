@@ -1,0 +1,9 @@
+read_verilog and_gate_non_synth.v
+hierarchy -check -top and_gate_non_synth
+proc; opt; fsm; opt; memory; opt;
+techmap; opt;
+dfflibmap -liberty /home/coe-65/Desktop/Technology_PDKs/osu018/osu018_stdcells.lib
+abc -liberty /home/coe-65/Desktop/Technology_PDKs/osu018/osu018_stdcells.lib
+clean
+show
+write_verilog and_non_synth.v
