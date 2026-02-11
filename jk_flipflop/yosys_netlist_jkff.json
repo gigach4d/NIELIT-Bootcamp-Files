@@ -1,0 +1,191 @@
+{
+  "creator": "Yosys 0.9 (git sha1 1979e0b)",
+  "modules": {
+    "jk_ff": {
+      "attributes": {
+        "top": 1,
+        "src": "jk_ff.v:1"
+      },
+      "ports": {
+        "j": {
+          "direction": "input",
+          "bits": [ 2 ]
+        },
+        "k": {
+          "direction": "input",
+          "bits": [ 3 ]
+        },
+        "reset": {
+          "direction": "input",
+          "bits": [ 4 ]
+        },
+        "clk": {
+          "direction": "input",
+          "bits": [ 5 ]
+        },
+        "q": {
+          "direction": "output",
+          "bits": [ 6 ]
+        },
+        "qn": {
+          "direction": "output",
+          "bits": [ 7 ]
+        }
+      },
+      "cells": {
+        "$abc$108$auto$blifparse.cc:371:parse_blif$109": {
+          "hide_name": 1,
+          "type": "$_NOT_",
+          "parameters": {
+          },
+          "attributes": {
+          },
+          "port_directions": {
+            "A": "input",
+            "Y": "output"
+          },
+          "connections": {
+            "A": [ 3 ],
+            "Y": [ 8 ]
+          }
+        },
+        "$abc$108$auto$blifparse.cc:371:parse_blif$110": {
+          "hide_name": 1,
+          "type": "$_MUX_",
+          "parameters": {
+          },
+          "attributes": {
+          },
+          "port_directions": {
+            "A": "input",
+            "B": "input",
+            "S": "input",
+            "Y": "output"
+          },
+          "connections": {
+            "A": [ 2 ],
+            "B": [ 8 ],
+            "S": [ 6 ],
+            "Y": [ 9 ]
+          }
+        },
+        "$abc$108$auto$blifparse.cc:371:parse_blif$111": {
+          "hide_name": 1,
+          "type": "$_ANDNOT_",
+          "parameters": {
+          },
+          "attributes": {
+          },
+          "port_directions": {
+            "A": "input",
+            "B": "input",
+            "Y": "output"
+          },
+          "connections": {
+            "A": [ 9 ],
+            "B": [ 4 ],
+            "Y": [ 10 ]
+          }
+        },
+        "$abc$108$auto$blifparse.cc:371:parse_blif$112": {
+          "hide_name": 1,
+          "type": "$_NOT_",
+          "parameters": {
+          },
+          "attributes": {
+          },
+          "port_directions": {
+            "A": "input",
+            "Y": "output"
+          },
+          "connections": {
+            "A": [ 6 ],
+            "Y": [ 7 ]
+          }
+        },
+        "$auto$simplemap.cc:420:simplemap_dff$95": {
+          "hide_name": 1,
+          "type": "$_DFF_P_",
+          "parameters": {
+          },
+          "attributes": {
+            "src": "jk_ff.v:12"
+          },
+          "port_directions": {
+            "C": "input",
+            "D": "input",
+            "Q": "output"
+          },
+          "connections": {
+            "C": [ 5 ],
+            "D": [ 10 ],
+            "Q": [ 6 ]
+          }
+        }
+      },
+      "netnames": {
+        "$0\\q[0:0]": {
+          "hide_name": 1,
+          "bits": [ 10 ],
+          "attributes": {
+            "src": "jk_ff.v:12"
+          }
+        },
+        "$abc$108$new_n7_": {
+          "hide_name": 1,
+          "bits": [ 8 ],
+          "attributes": {
+          }
+        },
+        "$abc$108$new_n8_": {
+          "hide_name": 1,
+          "bits": [ 9 ],
+          "attributes": {
+          }
+        },
+        "clk": {
+          "hide_name": 0,
+          "bits": [ 5 ],
+          "attributes": {
+            "src": "jk_ff.v:5"
+          }
+        },
+        "j": {
+          "hide_name": 0,
+          "bits": [ 2 ],
+          "attributes": {
+            "src": "jk_ff.v:2"
+          }
+        },
+        "k": {
+          "hide_name": 0,
+          "bits": [ 3 ],
+          "attributes": {
+            "src": "jk_ff.v:3"
+          }
+        },
+        "q": {
+          "hide_name": 0,
+          "bits": [ 6 ],
+          "attributes": {
+            "src": "jk_ff.v:6"
+          }
+        },
+        "qn": {
+          "hide_name": 0,
+          "bits": [ 7 ],
+          "attributes": {
+            "src": "jk_ff.v:7"
+          }
+        },
+        "reset": {
+          "hide_name": 0,
+          "bits": [ 4 ],
+          "attributes": {
+            "src": "jk_ff.v:4"
+          }
+        }
+      }
+    }
+  }
+}
