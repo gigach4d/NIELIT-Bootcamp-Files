@@ -1,17 +1,3 @@
-module tff(
-	input clk,
-	input reset,
-	output reg q
-);
-	always @ (posedge clk or posedge reset)
-	begin
-	if(reset)
-		q <= 1'b0;
-	else
-		q <= ~q;
-	end
-endmodule
-
 module ripple_up_counter_4bit(
 	input clk,
 	input reset,
@@ -37,3 +23,19 @@ module ripple_up_counter_4bit(
 		.q(q_out3)
 	);
 	endmodule
+
+module tff(
+	input clk,
+	input reset,
+	output reg q
+);
+	always @ (posedge clk or posedge reset)
+	begin
+	if(reset)
+		q <= 1'b0;
+	else
+		q <= ~q;
+	end
+endmodule
+
+

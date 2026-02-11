@@ -13,7 +13,7 @@ initial begin
 	reset = 1;
 
 	$display("Time\treset\tq");
-	$monitor("%0dns\t%b", $time, reset, q);
+	$monitor("%0dns\t%b\t%b", $time, reset, q);
 	#10;
 	reset = 0;
 	#200;
