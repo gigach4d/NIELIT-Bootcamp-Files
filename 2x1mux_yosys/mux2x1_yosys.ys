@@ -1,0 +1,8 @@
+read_verilog mux2x1_synth.v
+hierarchy -check -top mux2x1_synth
+proc; opt; fsm; opt; memory; opt;
+techmap; opt;
+dfflibmap -liberty <path>
+abc -liberty <path>
+clean
+show
