@@ -2,7 +2,7 @@ read_verilog mux2x1_synth.v
 hierarchy -check -top mux2x1_synth
 proc; opt; fsm; opt; memory; opt;
 techmap; opt;
-dfflibmap -liberty <path>
-abc -liberty <path>
+dfflibmap -liberty /home/coe-694/Desktop/Technology_PDKs/osu018/osu018_stdcells.lib
+abc -liberty /home/coe-694/Desktop/Technology_PDKs/osu018/osu018_stdcells.lib
 clean
 show

@@ -18,7 +18,7 @@ Vmux2x1_tb___024root::Vmux2x1_tb___024root(Vmux2x1_tb__Syms* symsp, const char* 
 }
 
 void Vmux2x1_tb___024root::__Vconfigure(bool first) {
-    if (false && first) {}  // Prevent unused
+    (void)first;  // Prevent unused variable warning
 }
 
 Vmux2x1_tb___024root::~Vmux2x1_tb___024root() {

@@ -18,15 +18,20 @@ class alignas(VL_CACHE_LINE_BYTES) Vmux2x1_tb___024root final : public Verilated
     Vmux2x1_tb___024unit* __PVT____024unit;
 
     // DESIGN SPECIFIC STATE
-    CData/*1:0*/ mux2x1_tb__DOT__in;
     CData/*0:0*/ mux2x1_tb__DOT__sel;
+    CData/*0:0*/ mux2x1_tb__DOT__out;
+    CData/*1:0*/ mux2x1_tb__DOT__in;
     CData/*0:0*/ __VstlFirstIteration;
+    CData/*1:0*/ __Vtrigprevexpr___TOP__mux2x1_tb__DOT__in__0;
+    CData/*0:0*/ __Vtrigprevexpr___TOP__mux2x1_tb__DOT__out__0;
+    CData/*0:0*/ __Vtrigprevexpr___TOP__mux2x1_tb__DOT__sel__0;
+    CData/*0:0*/ __VactDidInit;
     CData/*0:0*/ __VactContinue;
     IData/*31:0*/ __VactIterCount;
     VlDelayScheduler __VdlySched;
     VlTriggerVec<1> __VstlTriggered;
-    VlTriggerVec<1> __VactTriggered;
-    VlTriggerVec<1> __VnbaTriggered;
+    VlTriggerVec<4> __VactTriggered;
+    VlTriggerVec<4> __VnbaTriggered;
 
     // INTERNAL VARIABLES
     Vmux2x1_tb__Syms* const vlSymsp;

@@ -13,48 +13,49 @@ VM_TIMING = 1
 VM_COVERAGE = 0
 # Parallel builds?  0/1 (from --output-split)
 VM_PARALLEL_BUILDS = 0
-# Tracing output mode?  0/1 (from --trace/--trace-fst)
+# Tracing output mode?  0/1 (from --trace-fst/--trace-saif/--trace-vcd)
 VM_TRACE = 1
-# Tracing output mode in VCD format?  0/1 (from --trace)
-VM_TRACE_VCD = 1
 # Tracing output mode in FST format?  0/1 (from --trace-fst)
 VM_TRACE_FST = 0
+# Tracing output mode in SAIF format?  0/1 (from --trace-saif)
+VM_TRACE_SAIF = 0
+# Tracing output mode in VCD format?  0/1 (from --trace-vcd)
+VM_TRACE_VCD = 1
 
 ### Object file lists...
 # Generated module classes, fast-path, compile with highest optimization
 VM_CLASSES_FAST += \
-	Vmux2x1_tb \
-	Vmux2x1_tb___024root__DepSet_h927bce04__0 \
-	Vmux2x1_tb___024root__DepSet_h6058625e__0 \
-	Vmux2x1_tb__main \
+  Vmux2x1_tb \
+  Vmux2x1_tb___024root__DepSet_h927bce04__0 \
+  Vmux2x1_tb___024root__DepSet_h6058625e__0 \
+  Vmux2x1_tb__main \
 
 # Generated module classes, non-fast-path, compile with low/medium optimization
 VM_CLASSES_SLOW += \
-	Vmux2x1_tb___024root__Slow \
-	Vmux2x1_tb___024root__DepSet_h927bce04__0__Slow \
-	Vmux2x1_tb___024root__DepSet_h6058625e__0__Slow \
-	Vmux2x1_tb___024unit__Slow \
-	Vmux2x1_tb___024unit__DepSet_h6120b89e__0__Slow \
+  Vmux2x1_tb___024root__Slow \
+  Vmux2x1_tb___024root__DepSet_h927bce04__0__Slow \
+  Vmux2x1_tb___024root__DepSet_h6058625e__0__Slow \
+  Vmux2x1_tb___024unit__Slow \
+  Vmux2x1_tb___024unit__DepSet_h6120b89e__0__Slow \
 
 # Generated support classes, fast-path, compile with highest optimization
 VM_SUPPORT_FAST += \
-	Vmux2x1_tb__Trace__0 \
+  Vmux2x1_tb__Trace__0 \
 
 # Generated support classes, non-fast-path, compile with low/medium optimization
 VM_SUPPORT_SLOW += \
-	Vmux2x1_tb__Syms \
-	Vmux2x1_tb__Trace__0__Slow \
-	Vmux2x1_tb__TraceDecls__0__Slow \
+  Vmux2x1_tb__Syms \
+  Vmux2x1_tb__Trace__0__Slow \
+  Vmux2x1_tb__TraceDecls__0__Slow \
 
 # Global classes, need linked once per executable, fast-path, compile with highest optimization
 VM_GLOBAL_FAST += \
-	verilated \
-	verilated_vcd_c \
-	verilated_timing \
-	verilated_threads \
+  verilated \
+  verilated_vcd_c \
+  verilated_timing \
+  verilated_threads \
 
 # Global classes, need linked once per executable, non-fast-path, compile with low/medium optimization
 VM_GLOBAL_SLOW += \
-
 
 # Verilated -*- Makefile -*-

@@ -8,9 +8,9 @@
 VlCoroutine Vmux2x1_tb___024root___eval_initial__TOP__Vtiming__0(Vmux2x1_tb___024root* vlSelf);
 
 void Vmux2x1_tb___024root___eval_initial(Vmux2x1_tb___024root* vlSelf) {
-    if (false && vlSelf) {}  // Prevent unused
-    Vmux2x1_tb__Syms* const __restrict vlSymsp VL_ATTR_UNUSED = vlSelf->vlSymsp;
     VL_DEBUG_IF(VL_DBG_MSGF("+    Vmux2x1_tb___024root___eval_initial\n"); );
+    Vmux2x1_tb__Syms* const __restrict vlSymsp VL_ATTR_UNUSED = vlSelf->vlSymsp;
+    auto& vlSelfRef = std::ref(*vlSelf).get();
     // Body
     Vmux2x1_tb___024root___eval_initial__TOP__Vtiming__0(vlSelf);
 }
@@ -18,50 +18,63 @@ void Vmux2x1_tb___024root___eval_initial(Vmux2x1_tb___024root* vlSelf) {
 void Vmux2x1_tb___024root___act_sequent__TOP__0(Vmux2x1_tb___024root* vlSelf);
 
 void Vmux2x1_tb___024root___eval_act(Vmux2x1_tb___024root* vlSelf) {
-    if (false && vlSelf) {}  // Prevent unused
-    Vmux2x1_tb__Syms* const __restrict vlSymsp VL_ATTR_UNUSED = vlSelf->vlSymsp;
     VL_DEBUG_IF(VL_DBG_MSGF("+    Vmux2x1_tb___024root___eval_act\n"); );
+    Vmux2x1_tb__Syms* const __restrict vlSymsp VL_ATTR_UNUSED = vlSelf->vlSymsp;
+    auto& vlSelfRef = std::ref(*vlSelf).get();
     // Body
-    if ((1ULL & vlSelf->__VactTriggered.word(0U))) {
+    if ((8ULL & vlSelfRef.__VactTriggered.word(0U))) {
         Vmux2x1_tb___024root___act_sequent__TOP__0(vlSelf);
     }
 }
 
-void Vmux2x1_tb___024root___eval_nba(Vmux2x1_tb___024root* vlSelf) {
-    if (false && vlSelf) {}  // Prevent unused
+VL_INLINE_OPT void Vmux2x1_tb___024root___act_sequent__TOP__0(Vmux2x1_tb___024root* vlSelf) {
+    VL_DEBUG_IF(VL_DBG_MSGF("+    Vmux2x1_tb___024root___act_sequent__TOP__0\n"); );
     Vmux2x1_tb__Syms* const __restrict vlSymsp VL_ATTR_UNUSED = vlSelf->vlSymsp;
-    VL_DEBUG_IF(VL_DBG_MSGF("+    Vmux2x1_tb___024root___eval_nba\n"); );
+    auto& vlSelfRef = std::ref(*vlSelf).get();
     // Body
-    if ((1ULL & vlSelf->__VnbaTriggered.word(0U))) {
-        Vmux2x1_tb___024root___act_sequent__TOP__0(vlSelf);
+    vlSelfRef.mux2x1_tb__DOT__out = (1U & ((IData)(vlSelfRef.mux2x1_tb__DOT__sel)
+                                            ? ((IData)(vlSelfRef.mux2x1_tb__DOT__in) 
+                                               >> 1U)
+                                            : (IData)(vlSelfRef.mux2x1_tb__DOT__in)));
+}
+
+void Vmux2x1_tb___024root___nba_sequent__TOP__0(Vmux2x1_tb___024root* vlSelf);
+
+void Vmux2x1_tb___024root___eval_nba(Vmux2x1_tb___024root* vlSelf) {
+    VL_DEBUG_IF(VL_DBG_MSGF("+    Vmux2x1_tb___024root___eval_nba\n"); );
+    Vmux2x1_tb__Syms* const __restrict vlSymsp VL_ATTR_UNUSED = vlSelf->vlSymsp;
+    auto& vlSelfRef = std::ref(*vlSelf).get();
+    // Body
+    if ((7ULL & vlSelfRef.__VnbaTriggered.word(0U))) {
+        Vmux2x1_tb___024root___nba_sequent__TOP__0(vlSelf);
     }
 }
 
 void Vmux2x1_tb___024root___timing_resume(Vmux2x1_tb___024root* vlSelf) {
-    if (false && vlSelf) {}  // Prevent unused
-    Vmux2x1_tb__Syms* const __restrict vlSymsp VL_ATTR_UNUSED = vlSelf->vlSymsp;
     VL_DEBUG_IF(VL_DBG_MSGF("+    Vmux2x1_tb___024root___timing_resume\n"); );
+    Vmux2x1_tb__Syms* const __restrict vlSymsp VL_ATTR_UNUSED = vlSelf->vlSymsp;
+    auto& vlSelfRef = std::ref(*vlSelf).get();
     // Body
-    if ((1ULL & vlSelf->__VactTriggered.word(0U))) {
-        vlSelf->__VdlySched.resume();
+    if ((8ULL & vlSelfRef.__VactTriggered.word(0U))) {
+        vlSelfRef.__VdlySched.resume();
     }
 }
 
 void Vmux2x1_tb___024root___eval_triggers__act(Vmux2x1_tb___024root* vlSelf);
 
 bool Vmux2x1_tb___024root___eval_phase__act(Vmux2x1_tb___024root* vlSelf) {
-    if (false && vlSelf) {}  // Prevent unused
-    Vmux2x1_tb__Syms* const __restrict vlSymsp VL_ATTR_UNUSED = vlSelf->vlSymsp;
     VL_DEBUG_IF(VL_DBG_MSGF("+    Vmux2x1_tb___024root___eval_phase__act\n"); );
+    Vmux2x1_tb__Syms* const __restrict vlSymsp VL_ATTR_UNUSED = vlSelf->vlSymsp;
+    auto& vlSelfRef = std::ref(*vlSelf).get();
     // Init
-    VlTriggerVec<1> __VpreTriggered;
+    VlTriggerVec<4> __VpreTriggered;
     CData/*0:0*/ __VactExecute;
     // Body
     Vmux2x1_tb___024root___eval_triggers__act(vlSelf);
-    __VactExecute = vlSelf->__VactTriggered.any();
+    __VactExecute = vlSelfRef.__VactTriggered.any();
     if (__VactExecute) {
-        __VpreTriggered.andNot(vlSelf->__VactTriggered, vlSelf->__VnbaTriggered);
-        vlSelf->__VnbaTriggered.thisOr(vlSelf->__VactTriggered);
+        __VpreTriggered.andNot(vlSelfRef.__VactTriggered, vlSelfRef.__VnbaTriggered);
+        vlSelfRef.__VnbaTriggered.thisOr(vlSelfRef.__VactTriggered);
         Vmux2x1_tb___024root___timing_resume(vlSelf);
         Vmux2x1_tb___024root___eval_act(vlSelf);
     }
@@ -69,16 +82,16 @@ bool Vmux2x1_tb___024root___eval_phase__act(Vmux2x1_tb___024root* vlSelf) {
 }
 
 bool Vmux2x1_tb___024root___eval_phase__nba(Vmux2x1_tb___024root* vlSelf) {
-    if (false && vlSelf) {}  // Prevent unused
-    Vmux2x1_tb__Syms* const __restrict vlSymsp VL_ATTR_UNUSED = vlSelf->vlSymsp;
     VL_DEBUG_IF(VL_DBG_MSGF("+    Vmux2x1_tb___024root___eval_phase__nba\n"); );
+    Vmux2x1_tb__Syms* const __restrict vlSymsp VL_ATTR_UNUSED = vlSelf->vlSymsp;
+    auto& vlSelfRef = std::ref(*vlSelf).get();
     // Init
     CData/*0:0*/ __VnbaExecute;
     // Body
-    __VnbaExecute = vlSelf->__VnbaTriggered.any();
+    __VnbaExecute = vlSelfRef.__VnbaTriggered.any();
     if (__VnbaExecute) {
         Vmux2x1_tb___024root___eval_nba(vlSelf);
-        vlSelf->__VnbaTriggered.clear();
+        vlSelfRef.__VnbaTriggered.clear();
     }
     return (__VnbaExecute);
 }
@@ -91,9 +104,9 @@ VL_ATTR_COLD void Vmux2x1_tb___024root___dump_triggers__act(Vmux2x1_tb___024root
 #endif  // VL_DEBUG
 
 void Vmux2x1_tb___024root___eval(Vmux2x1_tb___024root* vlSelf) {
-    if (false && vlSelf) {}  // Prevent unused
-    Vmux2x1_tb__Syms* const __restrict vlSymsp VL_ATTR_UNUSED = vlSelf->vlSymsp;
     VL_DEBUG_IF(VL_DBG_MSGF("+    Vmux2x1_tb___024root___eval\n"); );
+    Vmux2x1_tb__Syms* const __restrict vlSymsp VL_ATTR_UNUSED = vlSelf->vlSymsp;
+    auto& vlSelfRef = std::ref(*vlSelf).get();
     // Init
     IData/*31:0*/ __VnbaIterCount;
     CData/*0:0*/ __VnbaContinue;
@@ -101,7 +114,7 @@ void Vmux2x1_tb___024root___eval(Vmux2x1_tb___024root* vlSelf) {
     __VnbaIterCount = 0U;
     __VnbaContinue = 1U;
     while (__VnbaContinue) {
-        if (VL_UNLIKELY((0x64U < __VnbaIterCount))) {
+        if (VL_UNLIKELY(((0x64U < __VnbaIterCount)))) {
 #ifdef VL_DEBUG
             Vmux2x1_tb___024root___dump_triggers__nba(vlSelf);
 #endif
@@ -109,20 +122,20 @@ void Vmux2x1_tb___024root___eval(Vmux2x1_tb___024root* vlSelf) {
         }
         __VnbaIterCount = ((IData)(1U) + __VnbaIterCount);
         __VnbaContinue = 0U;
-        vlSelf->__VactIterCount = 0U;
-        vlSelf->__VactContinue = 1U;
-        while (vlSelf->__VactContinue) {
-            if (VL_UNLIKELY((0x64U < vlSelf->__VactIterCount))) {
+        vlSelfRef.__VactIterCount = 0U;
+        vlSelfRef.__VactContinue = 1U;
+        while (vlSelfRef.__VactContinue) {
+            if (VL_UNLIKELY(((0x64U < vlSelfRef.__VactIterCount)))) {
 #ifdef VL_DEBUG
                 Vmux2x1_tb___024root___dump_triggers__act(vlSelf);
 #endif
                 VL_FATAL_MT("mux2x1_tb.v", 1, "", "Active region did not converge.");
             }
-            vlSelf->__VactIterCount = ((IData)(1U) 
-                                       + vlSelf->__VactIterCount);
-            vlSelf->__VactContinue = 0U;
+            vlSelfRef.__VactIterCount = ((IData)(1U) 
+                                         + vlSelfRef.__VactIterCount);
+            vlSelfRef.__VactContinue = 0U;
             if (Vmux2x1_tb___024root___eval_phase__act(vlSelf)) {
-                vlSelf->__VactContinue = 1U;
+                vlSelfRef.__VactContinue = 1U;
             }
         }
         if (Vmux2x1_tb___024root___eval_phase__nba(vlSelf)) {
@@ -133,8 +146,8 @@ void Vmux2x1_tb___024root___eval(Vmux2x1_tb___024root* vlSelf) {
 
 #ifdef VL_DEBUG
 void Vmux2x1_tb___024root___eval_debug_assertions(Vmux2x1_tb___024root* vlSelf) {
-    if (false && vlSelf) {}  // Prevent unused
-    Vmux2x1_tb__Syms* const __restrict vlSymsp VL_ATTR_UNUSED = vlSelf->vlSymsp;
     VL_DEBUG_IF(VL_DBG_MSGF("+    Vmux2x1_tb___024root___eval_debug_assertions\n"); );
+    Vmux2x1_tb__Syms* const __restrict vlSymsp VL_ATTR_UNUSED = vlSelf->vlSymsp;
+    auto& vlSelfRef = std::ref(*vlSelf).get();
 }
 #endif  // VL_DEBUG

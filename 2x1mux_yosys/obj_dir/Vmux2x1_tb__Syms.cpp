@@ -44,6 +44,8 @@ Vmux2x1_tb__Syms::Vmux2x1_tb__Syms(VerilatedContext* contextp, const char* namep
     , TOP{this, namep}
     , TOP____024unit{this, Verilated::catName(namep, "$unit")}
 {
+        // Check resources
+        Verilated::stackCheck(30);
     // Configure time unit / time precision
     _vm_contextp__->timeunit(-12);
     _vm_contextp__->timeprecision(-12);
@@ -52,6 +54,4 @@ Vmux2x1_tb__Syms::Vmux2x1_tb__Syms(VerilatedContext* contextp, const char* namep
     // Setup each module's pointer back to symbol table (for public functions)
     TOP.__Vconfigure(true);
     TOP____024unit.__Vconfigure(true);
-    // Setup scopes
-    __Vscope_mux2x1_tb.configure(this, name(), "mux2x1_tb", "mux2x1_tb", -12, VerilatedScope::SCOPE_OTHER);
 }

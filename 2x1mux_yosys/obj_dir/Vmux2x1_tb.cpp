@@ -15,6 +15,8 @@ Vmux2x1_tb::Vmux2x1_tb(VerilatedContext* _vcontextp__, const char* _vcname__)
 {
     // Register model with the context
     contextp()->addModel(this);
+    contextp()->traceBaseModelCbAdd(
+        [this](VerilatedTraceBaseC* tfp, int levels, int options) { traceBaseModel(tfp, levels, options); });
 }
 
 Vmux2x1_tb::Vmux2x1_tb(const char* _vcname__)
@@ -129,12 +131,14 @@ VL_ATTR_COLD static void trace_init(void* voidSelf, VerilatedVcd* tracep, uint32
 
 VL_ATTR_COLD void Vmux2x1_tb___024root__trace_register(Vmux2x1_tb___024root* vlSelf, VerilatedVcd* tracep);
 
-VL_ATTR_COLD void Vmux2x1_tb::trace(VerilatedVcdC* tfp, int levels, int options) {
-    if (tfp->isOpen()) {
-        vl_fatal(__FILE__, __LINE__, __FILE__,"'Vmux2x1_tb::trace()' shall not be called after 'VerilatedVcdC::open()'.");
+VL_ATTR_COLD void Vmux2x1_tb::traceBaseModel(VerilatedTraceBaseC* tfp, int levels, int options) {
+    (void)levels; (void)options;
+    VerilatedVcdC* const stfp = dynamic_cast<VerilatedVcdC*>(tfp);
+    if (VL_UNLIKELY(!stfp)) {
+        vl_fatal(__FILE__, __LINE__, __FILE__,"'Vmux2x1_tb::trace()' called on non-VerilatedVcdC object;"
+            " use --trace-fst with VerilatedFst object, and --trace-vcd with VerilatedVcd object");
     }
-    if (false && levels && options) {}  // Prevent unused
-    tfp->spTrace()->addModel(this);
-    tfp->spTrace()->addInitCb(&trace_init, &(vlSymsp->TOP));
-    Vmux2x1_tb___024root__trace_register(&(vlSymsp->TOP), tfp->spTrace());
+    stfp->spTrace()->addModel(this);
+    stfp->spTrace()->addInitCb(&trace_init, &(vlSymsp->TOP));
+    Vmux2x1_tb___024root__trace_register(&(vlSymsp->TOP), stfp->spTrace());
 }

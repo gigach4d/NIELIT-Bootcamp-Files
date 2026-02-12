@@ -35,9 +35,6 @@ class alignas(VL_CACHE_LINE_BYTES)Vmux2x1_tb__Syms final : public VerilatedSyms 
     Vmux2x1_tb___024root           TOP;
     Vmux2x1_tb___024unit           TOP____024unit;
 
-    // SCOPE NAMES
-    VerilatedScope __Vscope_mux2x1_tb;
-
     // CONSTRUCTORS
     Vmux2x1_tb__Syms(VerilatedContext* contextp, const char* namep, Vmux2x1_tb* modelp);
     ~Vmux2x1_tb__Syms();
