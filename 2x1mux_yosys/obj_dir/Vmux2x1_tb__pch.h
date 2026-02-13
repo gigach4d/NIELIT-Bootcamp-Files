@@ -23,4 +23,6 @@
 #include "Vmux2x1_tb__Syms.h"
 #include "Vmux2x1_tb.h"
 
+// Additional include files added using '--compiler-include'
+
 #endif  // guard

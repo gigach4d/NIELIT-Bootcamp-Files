@@ -6,10 +6,11 @@
 #include "Vmux2x1_tb___024unit.h"
 
 VL_ATTR_COLD void Vmux2x1_tb___024unit___ctor_var_reset(Vmux2x1_tb___024unit* vlSelf) {
-    if (false && vlSelf) {}  // Prevent unused
-    Vmux2x1_tb__Syms* const __restrict vlSymsp VL_ATTR_UNUSED = vlSelf->vlSymsp;
     VL_DEBUG_IF(VL_DBG_MSGF("+  Vmux2x1_tb___024unit___ctor_var_reset\n"); );
+    Vmux2x1_tb__Syms* const __restrict vlSymsp VL_ATTR_UNUSED = vlSelf->vlSymsp;
+    auto& vlSelfRef = std::ref(*vlSelf).get();
     // Body
-    vlSelf->__VmonitorNum = VL_RAND_RESET_Q(64);
-    vlSelf->__VmonitorOff = VL_RAND_RESET_I(1);
+    const uint64_t __VscopeHash = VL_MURMUR64_HASH(vlSelf->name());
+    vlSelf->__VmonitorNum = VL_SCOPED_RAND_RESET_Q(64, __VscopeHash, 9173067072191078724ull);
+    vlSelf->__VmonitorOff = VL_SCOPED_RAND_RESET_I(1, __VscopeHash, 9011783253012809090ull);
 }

@@ -17,17 +17,15 @@ void Vmux2x1_tb___024root__trace_chg_0(void* voidSelf, VerilatedVcd::Buffer* buf
 }
 
 void Vmux2x1_tb___024root__trace_chg_0_sub_0(Vmux2x1_tb___024root* vlSelf, VerilatedVcd::Buffer* bufp) {
-    if (false && vlSelf) {}  // Prevent unused
-    Vmux2x1_tb__Syms* const __restrict vlSymsp VL_ATTR_UNUSED = vlSelf->vlSymsp;
     VL_DEBUG_IF(VL_DBG_MSGF("+    Vmux2x1_tb___024root__trace_chg_0_sub_0\n"); );
+    Vmux2x1_tb__Syms* const __restrict vlSymsp VL_ATTR_UNUSED = vlSelf->vlSymsp;
+    auto& vlSelfRef = std::ref(*vlSelf).get();
     // Init
     uint32_t* const oldp VL_ATTR_UNUSED = bufp->oldp(vlSymsp->__Vm_baseCode + 1);
     // Body
-    bufp->chgCData(oldp+0,(vlSelf->mux2x1_tb__DOT__in),2);
-    bufp->chgBit(oldp+1,(vlSelf->mux2x1_tb__DOT__sel));
-    bufp->chgBit(oldp+2,((1U & ((IData)(vlSelf->mux2x1_tb__DOT__sel)
-                                 ? ((IData)(vlSelf->mux2x1_tb__DOT__in) 
-                                    >> 1U) : (IData)(vlSelf->mux2x1_tb__DOT__in)))));
+    bufp->chgCData(oldp+0,(vlSelfRef.mux2x1_tb__DOT__in),2);
+    bufp->chgBit(oldp+1,(vlSelfRef.mux2x1_tb__DOT__sel));
+    bufp->chgBit(oldp+2,(vlSelfRef.mux2x1_tb__DOT__out));
 }
 
 void Vmux2x1_tb___024root__trace_cleanup(void* voidSelf, VerilatedVcd* /*unused*/) {
