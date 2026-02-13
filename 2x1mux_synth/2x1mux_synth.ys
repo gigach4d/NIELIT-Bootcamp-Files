@@ -1,0 +1,9 @@
+read_verilog 2x1mux_synth.v
+hierarchy -check -top 2x1mux_synth
+proc; opt; fsm; opt; memory; opt;
+techmap; opt;
+dfflibmap -liberty /home/coe-65/Desktop/Technology_PDKs/osu018/osu018_stdcells.lib
+abc -liberty /home/coe-65/Desktop/Technology_PDKs/osu018/osu018_stdcells.lib
+clean
+show
+write_verilog 2x1_sys.v
