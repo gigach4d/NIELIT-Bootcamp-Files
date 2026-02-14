@@ -1,0 +1,205 @@
+Code of Half Adder:
+
+// 1) Half Adder - Dataflow Modelling
+// This model uses continuous assignment with assign statements
+`timescale 1ns/1ps  // Time unit = 1ns, time precision = 1ps
+module half_adder_dataflow(
+  input a,               // First input bit
+  input b,               // Second input bit
+  output sum,            // Sum output
+  output carry           // Carry output
+);
+  assign sum = a ^ b;    // XOR operation for sum
+  assign carry = a & b;  // AND operation for carry
+
+endmodule
+
+// 1) Testbench for Half Adder - Dataflow Modeling
+`timescale 1ns/1ps  // Time unit = 1ns, time precision = 1ps
+module half_adder_dataflow_tb;
+  reg a, b;                 // Input test signals
+  wire sum, carry;          // Outputs from the half adder
+  // Instantiate Unit Under Test (UUT)
+  half_adder_dataflow uut (
+    .a(a),
+    .b(b),
+    .sum(sum),
+    .carry(carry)
+  );
+
+  // Test stimulus block
+  initial begin
+    $display("Dataflow Half Adder Test");
+    $display("A B | Sum Carry");
+    $display("---------------------");
+
+    a = 0; b = 0; #10 $display("%b %b |  %b    %b", a, b, sum, carry);  // 0 + 0
+    a = 0; b = 1; #10 $display("%b %b |  %b    %b", a, b, sum, carry);  // 0 + 1
+    a = 1; b = 0; #10 $display("%b %b |  %b    %b", a, b, sum, carry);  // 1 + 0
+    a = 1; b = 1; #10 $display("%b %b |  %b    %b", a, b, sum, carry);  // 1 + 1
+
+    $finish;  // End simulation
+  end
+
+  // Dump waveform data for GTKWave
+  initial begin
+    $dumpfile("half_adder_dataflow.vcd");  // Output VCD file
+    $dumpvars(0, half_adder_dataflow_tb);  // (Dump all variables in testbench)
+  end
+endmodule
+
+// Steps to Simulate the Design Using Verilator
+
+1: Run Verilator to compile the design and testbench
+verilator --binary -j 0 -Wall half_adder_dataflow.v half_adder_dataflow_tb.v --top half_adder_dataflow_tb --timing --CFLAGS "-std=c++20" --trace
+
+2: If any errors occur, resolve them and rerun the command.
+3: After successful compilation, a new directory obj_dir will be created 
+ls
+4: Navigate into the obj_dir
+cd obj_dir
+5: Build the simulation binary
+make -f Vhalf_adder_dataflow_tb.mk Vhalf_adder_dataflow_tb
+6: After compilation, an executable named Vhalf_adder_dataflow_tb will be generated
+7: Run the simulation 
+./Vhalf_adder_dataflow_tb
+8: Observe the simulation output in the terminal
+
+//=============================================================================
+// 2) Half Adder - Behavioral Modeling
+// This model uses an always block and procedural assignment
+`timescale 1ns/1ps  // Time unit = 1ns, time precision = 1ps
+module half_adder_behavioral(
+  input a,         // First input bit
+  input b,         // Second input bit
+  output reg sum,  // Sum output (a XOR b)
+  output reg carry // Carry output (a AND b)
+);
+  //Combinational logic block triggered on changes to 'a' or 'b'
+  always @(a or b) begin
+    sum = a ^ b;      // XOR for sum
+    carry = a & b;    // AND for carry
+  end
+endmodule
+
+// Testbench for Half Adder - Behavioral Modeling
+`timescale 1ns/1ps  // Time unit = 1ns, time precision = 1ps
+module half_adder_behavioral_tb;
+  // Declare test inputs as reg and outputs as wire
+  reg a, b;
+  wire sum, carry;
+  // Instantiate the Unit Under Test (UUT)
+  half_adder_behavioral uut (
+    .a(a),
+    .b(b),
+    .sum(sum),
+    .carry(carry)
+  );
+  // Stimulus block
+  initial begin
+    $display("Behavioral Half Adder Test");
+    $display("A B | Sum Carry");
+    $display("---------------------");
+    // Apply all input combinations
+    a = 0; b = 0; #10 $display("%b %b |  %b    %b", a, b, sum, carry);  // 0 + 0
+    a = 0; b = 1; #10 $display("%b %b |  %b    %b", a, b, sum, carry);  // 0 + 1
+    a = 1; b = 0; #10 $display("%b %b |  %b    %b", a, b, sum, carry);  // 1 + 0
+    a = 1; b = 1; #10 $display("%b %b |  %b    %b", a, b, sum, carry);  // 1 + 1
+
+    $finish;  // Ends the simulation
+  end
+  // Dump VCD waveform for GTKWave
+  initial begin
+    $dumpfile("half_adder_behavioral.vcd");// (VCD output filename)
+    $dumpvars(0, half_adder_behavioral_tb); // (Dump all signals in this testbench)
+  end
+endmodule
+
+// Steps to Simulate the Design Using Verilator
+
+1: Run Verilator to compile the design and testbench
+verilator --binary -j 0 -Wall half_adder_behavioral.v half_adder_behaviral_tb.v --top half_adder_behavioral_tb --timing --CFLAGS "-std=c++20" --trace
+2: If any errors occur, resolve them and rerun the command.
+3: After successful compilation, a new directory obj_dir will be created 
+ls
+4: Navigate into the obj_dir
+cd obj_dir
+5: Build the simulation binary
+make -f Vhalf_adder_behavioral_tb.mk Vhalf_adder_behavioral_tb
+6: After compilation, an executable named Vhalf_adder_behavioral_tb will be generated
+7: Run the simulation 
+./Vhalf_adder_behavioral_tb
+8: Observe the simulation output in the terminal
+
+
+
+//=============================================================================
+
+// Half Adder - Structural Modeling
+// This model instantiates basic gates to build functionality
+`timescale 1ns/1ps  // Time unit = 1ns, time precision = 1ps
+module half_adder_structural(
+  input a,             // First input bit
+  input b,             // Second input bit
+  output sum,          // Sum output
+  output carry         // Carry output
+);
+
+  // Instantiate primitive gates with labels
+  xor u1(sum, a, b);    // sum = a XOR b
+  and u2(carry, a, b);  // carry = a AND b
+
+endmodule
+
+
+// Testbench for Half Adder - Structural Modeling
+`timescale 1ns/1ps  // Time unit = 1ns, time precision = 1ps
+module half_adder_structural_tb;
+  reg a, b;              // Input signals
+  wire sum, carry;       // Outputs from half adder
+  // Instantiate the Unit Under Test (UUT)
+  half_adder_structural uut (
+    .a(a),
+    .b(b),
+    .sum(sum),
+    .carry(carry)
+  );
+  // Apply test vectors
+  initial begin
+    $display("Structural Half Adder Test");
+    $display("A B | Sum Carry");
+    $display("---------------------");
+
+    a = 0; b = 0; #10 $display("%b %b |  %b    %b", a, b, sum, carry);  // 0 + 0
+    a = 0; b = 1; #10 $display("%b %b |  %b    %b", a, b, sum, carry);  // 0 + 1
+    a = 1; b = 0; #10 $display("%b %b |  %b    %b", a, b, sum, carry);  // 1 + 0
+    a = 1; b = 1; #10 $display("%b %b |  %b    %b", a, b, sum, carry);  // 1 + 1
+
+    $finish;  // End simulation
+  end
+  // Dump VCD waveform for GTKWave
+  initial begin
+    $dumpfile("half_adder_structural.vcd"); // (VCD output filename)
+    $dumpvars(0, half_adder_structural_tb); // (Dump all signals in testbench)
+  end
+endmodule
+
+// Simulate the Design Using Verilator
+1: Run Verilator to compile the design and testbench
+verilator --binary -j 0 -Wall half_adder_structural.v half_adder_structural_tb.v --top half_adder_structural_tb --timing --CFLAGS "-std=c++20" --trace
+2: If any errors occur, resolve them and rerun the command.
+3: After successful compilation, a new directory obj_dir will be created 
+ls
+4: Navigate into the obj_dir
+cd obj_dir
+5: Build the simulation binary
+make -f Vhalf_adder_structural_tb.mk Vhalf_adder_structural_tb
+6: After compilation, an executable named Vhalf_adder_structural_tb will be generated
+7: Run the simulation 
+./Vhalf_adder_structural_tb
+8: Observe the simulation output in the terminal
+
+
+
+
+

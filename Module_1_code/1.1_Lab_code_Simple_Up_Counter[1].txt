@@ -1,0 +1,46 @@
+Simple 4-Bit UP Counter 
+
+1) Design Code 4-bit UP Counter
+1.1) Create design file : up_counter_4bit.v
+RTL Design Code:
+module up_counter_4bit (input clk,
+			input reset,
+			output reg [3:0]count);
+always @(posedge clk or posedge reset) 
+	begin
+		if(reset)
+			count <= 4'b0000;
+		else 
+		       count <= count + 1;
+	end
+endmodule
+
+2) Testbench 
+2.1) Create testbench file : up_counter_4bit_tb.v
+Testbench:
+module up_counter_tb;
+	reg clk;
+	reg reset;
+	wire [3:0] count;
+
+up_counter_4bit uut (
+	.clk(clk),
+	.reset(reset),
+	.count(count)
+	);
+
+// clock generation
+always #5 clk = ~clk; // 10 time unit clock period
+initial 
+     begin
+	$monitor ("Time=%t | Reset=%b | count=%b",$time,reset,count);
+	reset = 1; #10;
+	reset = 0; #200;
+	$finish;
+end
+initial begin
+	$dumpfile ("up_counter_4bit.vcd");
+	$dumpvars();
+	end
+endmodule
+

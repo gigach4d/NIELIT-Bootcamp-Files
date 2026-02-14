@@ -1,0 +1,48 @@
+Implementation of AND gate 
+The AND gate is a combinational logic gate that performs the logical AND operation. Its output is a logic high (1) only if all its inputs are high (1); otherwise, the output is low (0).
+
+1) Design Code of AND gate
+
+RTL Design Code:
+
+module and_gate_design (
+	input A, 
+	input B,
+	output out
+);
+assign out = A&B;
+endmodule
+
+// Create Testbench File : and_gate_tb.v
+Testbench:
+module and_gate_tb;
+reg A;
+reg B;
+wire out;
+and_gate_design uut(.A(A), .B(B), .out(out));
+initial begin
+$display (" time=%t A = %0b| B =%0b | out =%b", $time, A, B, out);
+$monitor (" time=%t A = %0b| B =%0b | out = %b", $time,A,B,out);
+#10;
+	A = 1'b0; B = 1'b0 ; #10;
+	A = 1'b0; B = 1'b1 ; #10;
+	A = 1'b1; B = 1'b0 ; #10;
+	A = 1'b1; B = 1'b1 ; #10;
+	$finish;
+end
+initial begin
+$dumpfile("dump_and_gate.vcd");
+	$dumpvars();
+end
+endmodule
+
+// Simulate the Design with Verilator
+
+1:	Use the following command to simulate 
+verilator --binary -j 0 -Wall and_gate_design.v and_gate_tb.v --top and_gate_tb --timing --CFLAGS "-std=c++20" --trace
+2: 	If any error is available, resolve it.
+3: 	After simulation a new directory obj_dir will be created by tool, check it by using command “ls”.
+4: 	Open obj_dir
+5: 	Use command make -f Vand_gate_tb.mk Vand_gate_tb
+6: 	A new directory with name Vand_gate_tb will be created
+7: 	Use command ./Vand_gate_tb to compile

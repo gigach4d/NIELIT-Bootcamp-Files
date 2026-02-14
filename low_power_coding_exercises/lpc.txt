@@ -1,0 +1,106 @@
+Low-Power Verilog Coding Exercises
+
+Unnecessary switching activity in digital designs often the result of careless coding styles directly leads to greater dynamic power consumption. This lab demonstrates how to optimize RTL, compares a poorly written FSM with an optimized version.
+1:Design code of Inefficient FSM
+Design a finite state machine (FSM) with unconditional assignments that cause unnecessary switching on every clock cycle.
+Create the design file: inefficient_fsm.v
+// Poorly written FSM - updates all outputs and states even when unchanged
+module inefficient_fsm (
+  input clk,
+  input rst,
+  input start,
+  output reg [1:0] state,
+  output reg done
+);
+
+  always @(posedge clk or posedge rst) begin
+    if (rst) begin
+      state <= 0;
+      done <= 0;
+    end else begin
+      state <= state + 1;
+      if (state == 2)
+        done <= 1;
+    end
+  end
+
+endmodule
+Power Issue:
+Even if state and done aren't changing logically, they are still assigned every clock cycle leading to unnecessary toggling.
+
+
+
+2:Design code of  Optimized FSM
+Refactor the FSM to update state and outputs only when necessary, thus minimizing switching activity and saving power.
+Create the design file: optimized_fsm.v
+// Optimized FSM - updates outputs only when needed
+module optimized_fsm (
+  input clk,
+  input rst,
+  input start,
+  output reg [1:0] state,
+  output reg done
+);
+
+  always @(posedge clk or posedge rst) begin
+    if (rst) begin
+      state <= 0;
+      done <= 0;
+    end else begin
+      case (state)
+        0: if (start) state <= 1;
+        1: state <= 2;
+        2: begin
+          done <= 1;
+          state <= 3;
+        end
+      endcase
+    end
+  end
+
+endmodule
+Power Optimized:
+Only updates when needed. This avoids redundant toggles and saves power in real hardware.
+
+
+
+
+
+ 3: Testbench to verify the design
+Create a testbench to simulate both the inefficient and optimized FSMs under identical stimuli.
+Create the testbench file: fsm_tb.v
+// Testbench to compare inefficient and optimized FSMs
+module fsm_tb;
+
+  reg clk = 0;
+  reg rst = 1;
+  reg start = 0;
+  wire [1:0] state_inefficient, state_optimized;
+  wire done_inefficient, done_optimized;
+
+  always #5 clk = ~clk; // 10ns clock
+
+  // Instantiate inefficient FSM
+  inefficient_fsm u_bad (
+    .clk(clk), .rst(rst), .start(start),
+    .state(state_inefficient), .done(done_inefficient)
+  );
+
+  // Instantiate optimized FSM
+  optimized_fsm u_opt (
+    .clk(clk), .rst(rst), .start(start),
+    .state(state_optimized), .done(done_optimized)
+  );
+
+  initial begin
+    $dumpfile("dump.vcd");
+    $dumpvars(0, fsm_tb);
+
+    #12 rst = 0;        // Release reset after 12ns
+    #10 start = 1;      // Start FSM after 10ns
+    #20 start = 0;      // Deactivate start after 20ns
+    #100 $finish;       // End simulation
+  end
+
+endmodule
+

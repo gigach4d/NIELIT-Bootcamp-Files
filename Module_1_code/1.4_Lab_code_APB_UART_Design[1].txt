@@ -1,0 +1,492 @@
+Implementation of APB-UART Design
+
+1) UART Core Design 
+UART Design Code:
+module uart(input wire [7:0] din,
+            input wire wr_en,
+            input wire clk_50m,
+            output wire tx,
+            output wire tx_busy,
+            input wire rx,
+            output wire rdy,
+            input wire rdy_clr,
+            output wire [7:0] dout);
+  wire rxclk_en, txclk_en;
+  baud_rate_gen uart_baud(.clk_50m(clk_50m),
+                          .rxclk_en(rxclk_en),
+                          .txclk_en(txclk_en));
+  transmitter uart_tx(.din(din),
+                      .wr_en(wr_en),
+                      .clk_50m(clk_50m),
+                      .clken(txclk_en),
+                      .tx(tx),
+                      .tx_busy(tx_busy));
+  receiver uart_rx(.rx(rx),
+                   .rdy(rdy),
+                   .rdy_clr(rdy_clr),
+                   .clk_50m(clk_50m),
+                   .clken(rxclk_en),
+                   .data(dout));
+endmodule
+
+Transmitter Module
+module transmitter(input wire [7:0] din,
+                   input wire wr_en,
+                   input wire clk_50m,
+                   input wire clken,
+                   output reg tx,
+                   output wire tx_busy);
+  initial begin
+    tx = 1'b1;
+    end
+  parameter STATE_IDLE= 2'b00;
+  parameter STATE_START= 2'b01;
+  parameter STATE_DATA= 2'b10;
+  parameter STATE_STOP= 2'b11;
+  reg [7:0] data = 8'h00;
+  reg [2:0] bitpos = 3'h0;
+  reg [1:0] state = STATE_IDLE;
+  always @(posedge clk_50m) begin
+    case (state)
+      STATE_IDLE: begin
+        if (wr_en) begin
+          state <= STATE_START;
+          data <= din;
+          bitpos <= 3'h0;
+          end
+        end
+      STATE_START: begin
+        if (clken) begin
+          tx <= 1'b0;
+          state <= STATE_DATA;
+          end
+        end
+      STATE_DATA: begin
+        if (clken) begin
+          if (bitpos == 3'h7)
+            state <= STATE_STOP;
+          else
+            bitpos <= bitpos + 3'h1;
+          tx <= data[bitpos];
+          end
+        end
+      STATE_STOP: begin
+        if (clken) begin
+          tx <= 1'b1;
+          state <= STATE_IDLE;
+          end
+        end
+      default: begin
+        tx <= 1'b1;
+        state <= STATE_IDLE;
+        end
+      endcase
+    end
+  assign tx_busy = (state != STATE_IDLE);
+endmodule
+Receiver Module
+module receiver(input wire rx,
+                output reg rdy,
+                input wire rdy_clr,
+                input wire clk_50m,
+                input wire clken,
+                output reg [7:0] data);
+  initial begin
+    rdy = 0;
+    data = 8'b0;
+    end
+  parameter RX_STATE_START= 2'b00;
+  parameter RX_STATE_DATA= 2'b01;
+  parameter RX_STATE_STOP= 2'b10;
+  reg [1:0] state = RX_STATE_START;
+  reg [3:0] sample = 0;
+  reg [3:0] bitpos = 0;
+  reg [7:0] scratch = 8'b0;
+  always @(posedge clk_50m) begin
+    if (rdy_clr)
+      rdy <= 0;
+    if (clken) begin
+      case (state)
+        RX_STATE_START: begin
+          if (!rx || sample != 0)
+            sample <= sample + 4'b1;
+          if (sample == 15) begin
+            state <= RX_STATE_DATA;
+            bitpos <= 0;
+            sample <= 0;
+            scratch <= 0;
+            end
+          end
+        RX_STATE_DATA: begin
+          sample <= sample + 4'b1;
+          if (sample == 4'h8) begin
+            scratch[bitpos[2:0]] <= rx;
+            bitpos <= bitpos + 4'b1;
+            end
+          if (bitpos == 8 && sample == 15)
+            state <= RX_STATE_STOP;
+          end
+        RX_STATE_STOP: begin
+          if (sample == 15 || (sample >= 8 && !rx)) begin
+            state <= RX_STATE_START;
+            data <= scratch;
+            rdy <= 1'b1;
+            sample <= 0;
+          end else begin
+            sample <= sample + 4'b1;
+            end
+          end
+        default: begin
+          state <= RX_STATE_START;
+          end
+        endcase
+      end
+    end
+endmodule
+
+
+
+
+Baud Rate Module
+module baud_rate_gen(input wire clk_50m,
+                     output wire rxclk_en,
+                     output wire txclk_en);
+  parameter RX_ACC_MAX = 50000000 / (115200 * 16);
+  parameter TX_ACC_MAX = 50000000 / 115200;
+  parameter RX_ACC_WIDTH = $clog2(RX_ACC_MAX);
+  parameter TX_ACC_WIDTH = $clog2(TX_ACC_MAX);
+  reg [RX_ACC_WIDTH - 1:0] rx_acc = 0;
+  reg [TX_ACC_WIDTH - 1:0] tx_acc = 0;
+  assign rxclk_en = (rx_acc == 5'd0);
+  assign txclk_en = (tx_acc == 9'd0);
+  always @(posedge clk_50m) begin
+    if (rx_acc == RX_ACC_MAX[RX_ACC_WIDTH - 1:0])
+      rx_acc <= 0;
+    else
+      rx_acc <= rx_acc + 5'b1;
+    end
+  always @(posedge clk_50m) begin
+    if (tx_acc == TX_ACC_MAX[TX_ACC_WIDTH - 1:0])
+      tx_acc <= 0;
+    else
+      tx_acc <= tx_acc + 9'b1;
+    end
+endmodule
+2.2: Save the file using command- :wq!
+
+Step 3: Create APB Bridge Design file
+
+3.1: Open gvim editor for APB bridge with command: gvim uart_apb_bridge.v
+APB Bridge Design Code:
+module uart_apb_bridge (
+    // APB interface
+    input        CLK,
+    input        RESETn,
+    input [31:0] PADDR,
+    input [31:0] PWDATA,
+    input        PWRITE,
+    input        PSELx,
+    input        PENABLE,
+    output reg   PREADY,
+    output reg [31:0] PRDATA,
+
+    // UART interface
+    output reg [7:0] din,
+    output reg       wr_en,
+    output           tx,
+    output            tx_busy,
+
+    input            rx,
+    output      [7:0] dout,
+    output            rdy,
+    output reg       rdy_clr
+);
+
+    // Instantiate the UART module
+    uart uart_inst (
+        .din(din),
+        .wr_en(wr_en),
+        .clk_50m(CLK),  // Assuming APB clock is 50MHz
+        .tx(tx),
+        .tx_busy(tx_busy),
+        .rx(rx),
+        .rdy(rdy),
+        .rdy_clr(rdy_clr),
+        .dout(dout)
+    );
+    reg wr_en_next;
+
+    always @(posedge CLK or negedge RESETn) begin
+        if (!RESETn) begin
+            din      <= 8'd0;
+            wr_en    <= 1'b0;
+            rdy_clr  <= 1'b0;
+            PREADY   <= 1'b0;
+            PRDATA   <= 32'd0;
+        end else begin
+            wr_en    <= 1'b0;
+            rdy_clr  <= 1'b0;
+            PREADY   <= 1'b0;
+
+            if (PSELx && PENABLE) begin
+                PREADY <= 1'b1; // Complete in 1 cycle
+
+                if (PWRITE) begin
+                    case (PADDR[7:0])
+                        8'h00: begin  // TX data write
+                            din   <= PWDATA[7:0];
+                            wr_en <= 1'b1;
+                        end
+                        8'h0C: begin  // Clear RX ready
+                            rdy_clr <= 1'b1;
+                        end
+                    endcase
+                end else begin
+                    case (PADDR[7:0])
+                        8'h04: PRDATA <= {24'd0, dout}; // RX data
+                        8'h08: PRDATA <= {30'd0, tx_busy, rdy}; // Status
+                        default: PRDATA <= 32'd0;
+                    endcase
+                end
+            end
+        end
+    end
+endmodule
+
+3.2: Save the file using command- :wq!
+
+Step 4: Create Top-Level Design File
+
+4.1: Open gvim editor for top-level design with command: gvim top_uart_apb.v
+
+Top-Level Design Code:
+`include "uart.v"
+`include "uart_apb_bridge.v"
+
+module top_uart_apb (
+    input         CLK,
+    input         RESETn,
+
+    // APB interface
+    input  [31:0] PADDR,
+    input  [31:0] PWDATA,
+    input         PWRITE,
+    input         PSELx,
+    input         PENABLE,
+    output [31:0] PRDATA,
+    output        PREADY,
+
+    // UART interface
+    input         rx,
+    output        tx,
+    output        rdy,
+    output        tx_busy,
+    output [7:0]  dout,
+    output        rdy_clr
+);
+    wire [7:0]  din;
+    wire        wr_en;
+    uart_apb_bridge bridge_inst (
+        .CLK(CLK),
+        .RESETn(RESETn),
+        .PADDR(PADDR),
+        .PWDATA(PWDATA),
+        .PWRITE(PWRITE),
+        .PSELx(PSELx),
+        .PENABLE(PENABLE),
+        .PREADY(PREADY),
+        .PRDATA(PRDATA),
+
+        .din(din),
+        .wr_en(wr_en),
+        .tx(tx),
+        .tx_busy(tx_busy),
+        .rx(rx),
+        .dout(dout),
+        .rdy(rdy),
+        .rdy_clr(rdy_clr)
+    );
+
+endmodule
+
+4.2: Save the file using command-: wq!
+Step 5: Create Testbench file
+5.1: Open gvim editor for testbench with command: gvim tb_uart_apb.v
+Testbench Code:
+`timescale 1ns/10p
+module tb_uart_apb;
+    parameter BAUD_DELAY = 8700; // For 115200 baud at 50 MHz
+
+    reg         CLK;
+    reg         RESETn;
+
+    // APB signals
+    reg [31:0] PADDR;
+    reg [31:0] PWDATA;
+    reg         PWRITE;
+    reg         PSELx;
+    reg         PENABLE;
+    wire [31:0] PRDATA;
+    wire        PREADY;
+
+    // UART loopback setup
+    reg         rx_drv;
+    reg         use_loopback;
+    wire        tx, rx;
+
+    assign rx = use_loopback ? tx : rx_drv;
+
+    // Clock generation (50 MHz)
+    initial CLK = 0;
+    always #10 CLK = ~CLK;
+
+    // Instantiate DUT
+    top_uart_apb dut (
+        .CLK(CLK),
+        .RESETn(RESETn),
+        .rx(rx),
+        .tx(tx),
+        .rdy(),
+        .tx_busy(),
+        .dout(),
+        .rdy_clr(),
+
+        .PADDR(PADDR),
+        .PWDATA(PWDATA),
+        .PWRITE(PWRITE),
+        .PSELx(PSELx),
+        .PENABLE(PENABLE),
+        .PRDATA(PRDATA),
+        .PREADY(PREADY)
+    );
+
+    // Simulation control
+    initial begin
+        $dumpfile("top_uart.vcd");
+        $dumpvars();
+        RESETn       = 0;
+        rx_drv       = 1;
+        use_loopback = 0;
+        PADDR        = 0;
+        PWDATA       = 0;
+        PWRITE       = 0;
+        PSELx        = 0;
+        PENABLE      = 0;
+
+        #100;
+        RESETn = 1;
+        #100;
+
+        // -------- UART WRITE-READ LOOPBACK TEST --------
+        $display("\n--- UART Loopback Write-Read Test ---");
+        use_loopback = 1;
+
+        // Step 1: Write byte via APB to UART TX register
+        apb_write(32'h00, 32'h000000A5); // Write 0xA5
+
+        // Step 2: Wait for TX to complete
+      tx_wait: begin
+        repeat (100000) @(posedge CLK);
+        if (!dut.tx_busy)
+          disable tx_wait;
+      $display("TX Complete");
+    end
+
+        // Step 3: Wait for RX ready
+      rx_wait: begin
+        repeat (10000) @(posedge CLK);
+        if (dut.rdy)
+          disable rx_wait;
+      $display("RX Ready");
+    end
+
+        // Step 4: Read back received data
+        apb_read(32'h04); // Read RX data
+
+        if (PRDATA[7:0] === 8'hA5)
+            $display("UART Loopback Test Passed: Got 0x%0h", PRDATA[7:0]);
+        else
+            $display("UART Loopback Test Failed: Got 0x%0h (expected 0xA5)", PRDATA[7:0]);
+
+        // Step 5: Clear RX ready
+        #10000;
+        $finish;
+    end
+
+    // UART RX task
+    task uart_rx_byte(input [7:0] data_in);
+        integer i;
+        begin
+            use_loopback = 0;
+            rx_drv = 0; #(BAUD_DELAY);
+            for (i = 0; i < 8; i++) begin
+                rx_drv = data_in[i]; #(BAUD_DELAY);
+            end
+            rx_drv = 1; #(BAUD_DELAY);
+            $display("UART RX: Sent byte 0x%0h", data_in);
+        end
+    endtask
+
+    // APB Write Task
+    task apb_write(input [31:0] addr, input [31:0] data);
+        begin
+            @(posedge CLK);
+            PADDR   <= addr;
+            PWDATA  <= data;
+            PWRITE  <= 1;
+            PSELx   <= 1;
+            PENABLE <= 0;
+
+            @(posedge CLK);
+            PENABLE <= 1;
+
+            @(posedge CLK);
+            while (!PREADY) @(posedge CLK);
+
+            $display("APB WRITE: Addr=0x%0h, Data=0x%0h", addr, data);
+            PSELx   <= 0;
+            PENABLE <= 0;
+        end
+    endtask
+
+    // APB Read Task
+    task apb_read(input [31:0] addr);
+        begin
+            @(posedge CLK);
+            PADDR   <= addr;
+            PWRITE  <= 0;
+            PSELx   <= 1;
+            PENABLE <= 0;
+
+            @(posedge CLK);
+            PENABLE <= 1;
+
+            @(posedge CLK);
+            while (!PREADY) @(posedge CLK);
+
+            $display("APB READ : Addr=0x%0h, Data=0x%0h", addr, PRDATA);
+            PSELx   <= 0;
+            PENABLE <= 0;
+        end
+    endtask
+endmodule
+
+5.2: Save the testbench file using command- :wq!
+5.3: Check the saved files in current directory: use command ls
+
+Step 6: Simulate the Design with Verilator
+
+6.1: Use the following command to simulate:
+verilator --binary -j 0 -Wall uart.v uart_apb_bridge.v top_uart_apb.v tb_uart_apb.v --top tb_uart_apb --timing --CFLAGS "-std=c++20" --trace
+
+6.2: If any error is available, resolve it.
+
+6.3: After simulation a new directory obj_dir will be created by tool, check it by using command ls.
+
+6.4: Open obj_dir: cd obj_dir
+
+6.5: Use command make -f Vtb_uart_apb.mk Vtb_uart_apb
+
+6.6: A new directory with name Vtb_uart_apb will be created
+6.7: Use command ./Vtb_uart_apb to compile
+6.8: Check output at terminal for output

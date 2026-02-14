@@ -1,0 +1,170 @@
+Clock Gating Techniques
+
+Lab 2.1: Positive latch gating
+
+a) Create file for design :pos_edge_gating.v
+// Positive latch based clock gating (unsafe for real designs)
+
+module pos_latch_gating (
+    input  wire clk,
+    input  wire en,
+    input  wire rst,
+    output reg  [3:0] count,
+    output wire gated_clk
+);
+    reg en_latch;
+
+    // Positive latch: transparent when clk is high
+    always @(clk or en) begin
+        if (clk)
+            en_latch = en;
+    end
+
+    assign gated_clk = clk & en_latch;
+
+    always @(posedge gated_clk or posedge rst) begin
+        if (rst)
+            count <= 4'b0000;
+        else
+            count <= count + 1;
+    end
+endmodule
+
+b) Testbench:
+Create a file for testbench: pos_latch_gating_tb.v
+
+module pos_latch_gating_tb;
+    reg clk = 0, en = 0, rst = 1;
+    wire [3:0] count;
+    wire gated_clk;
+
+    pos_latch_gating uut (
+        .clk(clk), .en(en), .rst(rst),
+        .count(count), .gated_clk(gated_clk)
+    );
+    // Clock Generation
+    always #5 clk = ~clk; 
+    initial begin
+        $dumpfile("pos_latch_gating.vcd");
+        $dumpvars(0, pos_latch_gating_tb);
+
+        #12 rst = 0;
+        #10 en = 1; #30 en = 0;
+        #5  en = 1; #3 en = 0;  // short pulse near rising edge
+        #40 en = 1; #20 en = 0;
+        #30 $finish;
+    end
+endmodule
+
+Lab 2.2: Negative latch gating
+
+a) Create design file : neg_latch_gating.v
+// Negative latch-based clock gating (safer)
+
+module neg_latch_gating (
+    input  wire clk,
+    input  wire en,
+    input  wire rst,
+    output reg  [3:0] count,
+    output wire gated_clk
+);
+    reg en_latch;
+
+    // Negative latch: transparent when clk is low
+    always @(clk or en) begin
+        if (!clk)
+            en_latch = en;
+    end
+
+    assign gated_clk = clk & en_latch;
+
+    always @(posedge gated_clk or posedge rst) begin
+        if (rst)
+            count <= 4'b0000;
+        else
+            count <= count + 1;
+    end
+endmodule
+
+b) Testbench
+
+Create testbench file: neg_latch_gating_tb.v
+
+module neg_latch_gating_tb;
+    reg clk = 0, en = 0, rst = 1;
+    wire [3:0] count;
+    wire gated_clk;
+    neg_latch_gating uut (
+        .clk(clk), .en(en), .rst(rst),
+        .count(count), .gated_clk(gated_clk)
+    );
+    always #5 clk = ~clk;
+    initial begin
+        $dumpfile("neg_latch_gating.vcd");
+        $dumpvars(0, neg_latch_gating_tb);
+        #12 rst = 0;
+        #10 en = 1; #30 en = 0;
+        #5  en = 1; #3 en = 0;  // short pulse near rising edge
+        #40 en = 1; #20 en = 0;
+        #30 $finish;
+    end
+endmodule
+
+
+
+
+Lab 3: ICG cell model
+
+a) Create a design file: icg_cell_model.v
+
+// Simple behavioral model of an Integrated Clock Gating cell
+module icg_cell_model (
+    input  wire clk,
+    input  wire en,
+    input  wire rst,
+    output reg  [3:0] count,
+    output wire gated_clk,
+    output reg  en_latch_out
+);
+    reg en_latch;
+    // Capture enable only when clk is low
+    always @(clk or en) begin
+        if (!clk)
+            en_latch = en;
+    end
+    assign gated_clk = clk & en_latch;
+    always @* en_latch_out = en_latch;
+
+    always @(posedge gated_clk or posedge rst) begin
+        if (rst)
+            count <= 4'b0000;
+        else
+            count <= count + 1;
+    end
+endmodule
+
+b) Testbench
+
+Create testbench file: icg_cell_model_tb.v
+
+module icg_cell_model_tb;
+    reg clk = 0, en = 0, rst = 1;
+    wire [3:0] count;
+    wire gated_clk;
+    wire en_latch_out;
+    icg_cell_model uut (
+        .clk(clk), .en(en), .rst(rst),
+        .count(count), .gated_clk(gated_clk), .en_latch_out(en_latch_out)
+    );
+    always #5 clk = ~clk;
+    initial begin
+        $dumpfile("icg_cell_model.vcd");
+        $dumpvars(0, icg_cell_model_tb);
+        #12 rst = 0;
+        #10 en = 1; #30 en = 0;
+        #5  en = 1; #3 en = 0;  // short pulse near rising edge
+        #40 en = 1; #20 en = 0;
+        #30 $finish;
+    end
+endmodule
+

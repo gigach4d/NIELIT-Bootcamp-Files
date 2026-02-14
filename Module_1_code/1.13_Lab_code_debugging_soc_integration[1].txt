@@ -1,0 +1,139 @@
+Debugging SoC Integration – Detecting a Real Bug
+1: ALU: 
+ALU will performs either AND or ADD on two 4-bit inputs.
+Create the file for ALU: alu.v
+
+// Simple 4-bit ALU that performs bitwise AND and addition
+module alu (
+  input  [3:0] a,     // 4-bit operand A
+  input  [3:0] b,      // 4-bit operand B
+  input  sel,         // Operation select: 0 = AND, 1 = ADD
+  output reg [3:0] y   // 4-bit ALU output
+);
+  always @(*) begin
+    case (sel)
+      1'b0: y = a & b;         // Bitwise AND operation
+      1'b1: y = a + b;         // 4-bit addition
+      default: y = 4'b0000;
+    endcase
+  end
+endmodule
+
+2: UART Stub 
+
+Create a file for UART stub: uart.v
+// UART IP to mimic transmit behavior
+module uart (
+  input clk,               // Clock input
+  input rst_n,             // Active-low reset
+  input tx_en,             // Transmit enable
+  input [7:0] tx_data,     // 8-bit transmit data
+  output reg tx_done       // Transmit done flag
+);
+  always @(posedge clk or negedge rst_n) begin
+    if (!rst_n)
+      tx_done <= 0;
+    else if (tx_en)
+      tx_done <= 1;
+    else
+      tx_done <= 0;
+  end
+endmodule
+
+3: Buggy SoC Integration 
+
+Create a file for Buggy SoC Integration: top_soc_bug.v
+ SoC integration where ALU output is passed to UART.
+// Intentional Bug: alu_result (4-bit) passed directly to UART (8-bit input)
+module top_soc_bug (
+  input clk,
+  input rst_n,
+  input [3:0] in1,
+  input [3:0] in2,
+  input sel,
+  input tx_en,
+  output tx_done,
+  output [3:0] alu_out
+);
+  wire [3:0] alu_result;
+  // ALU instance for arithmetic/logic operation
+  alu u_alu (
+    .a(in1),
+    .b(in2),
+    .sel(sel),
+    .y(alu_result)
+  );
+  //  BUG: tx_data expects 8 bits but alu_result is only 4 bits.
+  // The upper 4 bits of tx_data will be undefined or X (unknown) in simulation.
+  uart u_uart (
+    .clk(clk),
+    .rst_n(rst_n),
+    .tx_en(tx_en),
+    .tx_data(alu_result),  // ← Mistake: should be {4'b0000, alu_result}
+    .tx_done(tx_done)
+  );
+  assign alu_out = alu_result;
+endmodule
+4: Create testbench file: soc_tb.v
+Stimulates both ADD and AND operations, each time enabling transmit so UART will record outcome.
+
+// Testbench that drives stimulus and dumps waveform
+module soc_tb;
+  reg clk = 0;
+  reg rst_n = 0;
+  reg [3:0] in1, in2;
+  reg sel;
+  reg tx_en;
+  wire tx_done;
+  wire [3:0] alu_out;
+  always #5 clk = ~clk;
+  // Instantiate the DUT (buggy SoC)
+  top_soc_bug uut (
+    .clk(clk),
+    .rst_n(rst_n),
+    .in1(in1),
+    .in2(in2),
+    .sel(sel),
+    .tx_en(tx_en),
+    .tx_done(tx_done),
+    .alu_out(alu_out)
+  );
+  initial begin
+    $dumpfile("dump.vcd");
+    $dumpvars();
+
+    // Apply reset
+    #10 rst_n = 1;
+    // Test 1: ADD 4 + 3 = 7, expect UART to transmit 8'b00000111
+    in1 = 4; in2 = 3; sel = 1; tx_en = 1;
+    #10 tx_en = 0;
+    // Test 2: AND 6 & 5 = 4, expect UART to transmit 8'b00000100
+    #20 in1 = 6; in2 = 5; sel = 0; tx_en = 1;
+    #10 tx_en = 0;
+    #40 $finish;
+  end
+endmodule
+
+
+Simulation Script:
+
+a) Create “run.sh”
+
+#!/bin/bash
+# Step 1: Run Verilator to compile and generate simulation files
+verilator --binary -j 0 -Wall \
+  alu.v uart.v top_soc_bug.v soc_tb.v \
+  --top soc_tb --timing --CFLAGS "-std=c++20" --trace
+# Step 2: Navigate to the object directory
+cd obj_dir || { echo "obj_dir not found"; exit 1; }
+# Step 3: Compile the simulation binary
+make -f Vsoc_tb.mk Vsoc_tb || { echo "Compilation failed"; exit 1; }
+# Step 4: Run the simulation
+./Vsoc_tb || { echo "Simulation failed"; exit 1; }
+# Step 5: Open the waveform in GTKWave
+gtkwave dump.vcd
+
+b) Make the script executable:
+chmod +x run.sh
+c ) Run the script to perform compilation, simulation, and open the waveform.
+

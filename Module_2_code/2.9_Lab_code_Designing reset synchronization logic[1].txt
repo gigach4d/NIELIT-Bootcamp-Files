@@ -1,0 +1,102 @@
+Reset Stretcher with Synchronous Release
+
+2.1) Reset_stretch
+
+Create a file: reset_stretch.v
+
+Create a file: reset_stretch.v
+module reset_stretch2 (
+    input  wire clk,
+    input  wire arst_n,
+    output wire srst_n
+);
+    reg [1:0] hold_cnt;
+    reg       hold;
+    always @(posedge clk or negedge arst_n) begin
+        if (!arst_n) begin
+            hold     <= 1'b1;
+            hold_cnt <= 2'd0;
+        end else if (hold) begin
+            if (hold_cnt == 2)
+                hold <= 1'b0;
+            else
+                hold_cnt <= hold_cnt + 1'b1;
+        end
+    end
+    assign srst_n = ~hold;
+endmodule
+
+2.2.  Reset top
+
+Create a file: reset_top
+module reset_top (
+    input  wire clk,
+    input  wire arst_n,
+    output wire [7:0] count,
+    output wire srst_n
+);
+    reset_stretch2 u_rst (
+        .clk(clk),
+        .arst_n(arst_n),
+        .srst_n(srst_n)
+    );
+    reg [7:0] cnt_q;
+    always @(posedge clk or negedge srst_n) begin
+        if (!srst_n)
+            cnt_q <= 8'h00;
+        else
+            cnt_q <= cnt_q + 1;
+    end
+    assign count = cnt_q;
+endmodule
+
+
+
+2.3. Testbench
+Testbench applying reset at arbitrary times to show stretching effect.
+
+Create a testbench file: reset_top_tb.v
+`timescale 1ns/1ps
+module reset_top_tb;
+    reg  clk = 0;
+    reg  arst_n = 1;
+    wire [7:0] count;
+    wire srst_n;
+    reset_top dut (
+        .clk(clk),
+        .arst_n(arst_n),
+        .count(count),
+        .srst_n(srst_n)
+    );
+    always #5 clk = ~clk; // 10 ns clock
+    initial begin
+        $dumpfile("reset_stretch2.vcd");
+        $dumpvars(0, reset_top_tb);
+        #7  arst_n = 0; // Assert off-cycle
+        #11 arst_n = 1; // Release, stretched 2 cycles
+        #100;
+        #3  arst_n = 0; // Quick second reset
+        #12 arst_n = 1;
+        #120 $finish;
+    end
+endmodule
+
+
+
+
+Step 4) Simulation Script 
+
+a) Create a script: run.sh
+#!/bin/bash
+#1: Run Verilator to compile and generate simulation files
+verilator --binary -j 0 -Wall \
+  reset_stretch.v reset_top.v reset_top_tb.v \
+  --top reset_top_tb --timing --CFLAGS "-std=c++20" --trace
+#2: Navigate to the object directory
+cd obj_dir || { echo "obj_dir not found"; exit 1; }
+#3: Compile the simulation binary
+make -f Vreset_top_tb.mk Vreset_top_tb || { echo "Compilation failed"; exit 1; }
+#4: Run the simulation
+./Vreset_top_tb || { echo "Simulation failed"; exit 1; }
+#5: Open the waveform in GTKWave
+gtkwave reset_stretch2.vcd

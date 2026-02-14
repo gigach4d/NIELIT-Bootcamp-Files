@@ -1,0 +1,117 @@
+Global Reset vs Synchronized Reset Release
+To demonstrate, using simulation, how a global asynchronous reset (which deasserts immediately) can cause hazards and glitches, whereas a synchronized reset is released cleanly on a clock edge, providing safer startup in digital designs.
+Design Code:
+1. Asynchronous Counter
+
+Create a file: counter_async.v
+module counter_async (
+    input  wire clk,
+    input  wire rst,       // async reset
+    output reg [3:0] count
+);
+    always @(posedge clk or posedge rst) begin
+        if (rst)
+            count <= 4'd0;
+        else
+            count <= count + 1; end
+endmodule
+
+2. Synchronized Reset
+Two-stage synchronizer safely deasserts reset on a clock edge. Prevents clock domain hazards.
+Create a file: reset_sync.v
+module reset_sync (
+    input  wire clk,
+    input  wire rst_async,
+    output reg  rst_sync
+);
+    reg stage1;
+
+    always @(posedge clk or posedge rst_async) begin
+        if (rst_async) begin
+            stage1   <= 1'b1;
+            rst_sync <= 1'b1;
+        end else begin
+            stage1   <= 1'b0;
+            rst_sync <= stage1;
+        end
+    end
+endmodule
+
+
+3. Synchronized Counter
+4-bit counter with reset input synchronized to the clock.
+Create a file: counter_sync.v
+module counter_sync (
+    input  wire clk,
+    input  wire rst_sync,
+    output reg [3:0] count
+);
+    always @(posedge clk) begin
+        if (rst_sync)
+            count <= 4'd0;
+        else
+            count <= count + 1;
+    end
+endmodule
+
+4. Testbench
+Drives reset scenarios and observe both async and sync counter behavior.
+Create a file: tb.v
+module tb;
+
+    reg clk = 0;
+    reg rst = 0;
+
+    wire [3:0] cnt_async;
+    wire [3:0] cnt_sync;
+    wire rst_sync;
+
+   // Clock
+    always #5 clk = ~clk;
+
+    // DUTs
+    counter_async u_async (.clk(clk), .rst(rst), .count(cnt_async));
+    reset_sync    u_sync  (.clk(clk), .rst_async(rst), .rst_sync(rst_sync));
+    counter_sync  u_syncc (.clk(clk), .rst_sync(rst_sync), .count(cnt_sync));
+
+    initial begin
+        $dumpfile("dump.vcd");
+        $dumpvars(0, tb);
+
+        // Step 1: Assert reset
+        rst = 1;
+        #25;
+
+        // Step 2: Deassert reset (possibly in middle of a clock cycle)
+        rst = 0;
+        #100;
+
+        // Step 3: Assert/deassert reset again
+        rst = 1;
+        #20;
+        rst = 0;
+
+        #50;
+        $finish;
+    end
+endmodule
+
+
+
+
+
+Step 2) Simulation Script 
+a) Create simulation script: run.sh
+#!/bin/bash
+# Step 1: Use Verilator to compile and generate simulation files
+verilator --binary -j 0 -Wall \
+  counter_async.v reset_sync.v counter_sync.v tb.v \
+  --top tb --timing --CFLAGS "-std=c++20" --trace
+# Step 2: Enter the object directory
+cd obj_dir || { echo "obj_dir not found"; exit 1; }
+# Step 3: Compile the simulation binary
+make -f Vtb.mk Vtb || { echo "Compilation failed"; exit 1; }
+# Step 4: Run the simulation
+./Vtb || { echo "Simulation failed"; exit 1; }
+# Step 5: Launch GTKWave to view the waveform
+gtkwave dump.vcd

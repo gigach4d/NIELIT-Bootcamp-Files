@@ -1,0 +1,196 @@
+Building a Multi-Clock Domain Subsystem
+This lab introduces the design and simulation of a multi-clock domain subsystem where two functional blocks communicate safely via an asynchronous FIFO buffer.
+
+1) Design code of Producer Module 
+
+Create the file for producer module: block_a.v
+module block_a (
+  input wr_clk,
+  input wr_rst,
+  input wr_full,
+  output reg wr_en,
+  output reg [7:0] wr_data
+);
+  reg [7:0] counter = 0;
+  always @(posedge wr_clk or posedge wr_rst) begin
+    if (wr_rst) begin
+      counter <= 0;
+      wr_en <= 0;
+    end else begin
+      wr_en <= !wr_full;
+      if (!wr_full) begin
+        wr_data <= counter;
+        counter <= counter + 1;
+      end
+    end
+  end
+endmodule
+
+2.2 Consumer Module
+Create the file for consumer module: block_b.v
+module block_b (
+  input rd_clk,
+  input rd_rst,
+  input rd_empty,
+  input [7:0] rd_data,
+  output reg rd_en
+);
+  always @(posedge rd_clk or posedge rd_rst) begin
+    if (rd_rst) begin
+      rd_en <= 0;
+    end else begin
+      rd_en <= !rd_empty;
+    end
+  end
+endmodule
+
+2.3 Asynchronous FIFO Module  
+
+Create the file for asynchronous FIFO module: async_fifo.v
+module async_fifo #(
+  parameter DEPTH = 8,       // FIFO depth
+  parameter DATA_WIDTH = 8 // Width of each data entry
+)(
+  input                   wr_clk,
+  input                   wr_rst,
+  input                   wr_en,
+  input  [DATA_WIDTH-1:0] wr_data,
+  output reg              wr_full,
+  input                   rd_clk,
+  input                   rd_rst,
+  input                   rd_en,
+  output reg [DATA_WIDTH-1:0] rd_data,
+  output reg              rd_empty
+);
+  // Memory storage for FIFO entries
+  reg [DATA_WIDTH-1:0] mem [0:DEPTH-1];
+  // Calculate pointer width based on DEPTH
+  localparam PTR_WIDTH = $clog2(DEPTH);
+  // Write and read pointers (binary counters)
+  reg [PTR_WIDTH-1:0] wr_ptr = 0;
+  reg [PTR_WIDTH-1:0] rd_ptr = 0;
+  // Write domain logic
+  always @(posedge wr_clk or posedge wr_rst) begin
+    if (wr_rst) begin
+      wr_ptr <= 0;
+      wr_full <= 0;
+    end else if (wr_en && !wr_full) begin
+      mem[wr_ptr] <= wr_data;
+      wr_ptr <= wr_ptr + 1;
+      wr_full <= ((wr_ptr + 1) == rd_ptr);  // Simple full condition 
+    end else begin
+      wr_full <= ((wr_ptr + 1) == rd_ptr);
+    end
+  end
+  // Read domain logic
+  always @(posedge rd_clk or posedge rd_rst) begin
+    if (rd_rst) begin
+      rd_ptr <= 0;
+      rd_empty <= 1;
+      rd_data <= 0;
+    end else if (rd_en && !rd_empty) begin
+      rd_data <= mem[rd_ptr];
+      rd_ptr <= rd_ptr + 1;
+      rd_empty <= (rd_ptr + 1 == wr_ptr);  // Simple empty condition
+    end else begin
+      rd_empty <= (rd_ptr == wr_ptr);
+    end
+  end
+endmodule
+
+2.4 Top Level Module
+Create the file for top level module: top_multi_clk.v
+// top_multi_clk.v
+module top_multi_clk(wr_clk, rd_clk, wr_rst,rd_rst);
+  input wr_clk; 
+  input rd_clk;
+  input wr_rst;
+  input rd_rst;
+
+  wire [7:0] wr_data, rd_data;
+  wire wr_en, wr_full;
+  wire rd_en, rd_empty;
+
+
+  block_a producer (
+    .wr_clk(wr_clk),
+    .wr_rst(wr_rst),
+    .wr_full(wr_full),
+    .wr_en(wr_en),
+    .wr_data(wr_data)
+  );
+
+  block_b consumer (
+    .rd_clk(rd_clk),
+    .rd_rst(rd_rst),
+    .rd_empty(rd_empty),
+    .rd_data(rd_data),
+    .rd_en(rd_en)
+  );
+
+  async_fifo #(
+  .DEPTH(8),
+  .DATA_WIDTH(8)
+) cdc_fifo (
+  .wr_clk(wr_clk),
+  .wr_rst(wr_rst),
+  .wr_en(wr_en),
+  .wr_data(wr_data),
+  .wr_full(wr_full),
+  .rd_clk(rd_clk),
+  .rd_rst(rd_rst),
+  .rd_en(rd_en),
+  .rd_data(rd_data),
+  .rd_empty(rd_empty)
+);
+endmodule
+
+2.5 Testbench 
+
+Create the file for testbench module: multi_clk_tb.v
+module multi_clk_tb;
+reg wr_clk, rd_clk;
+reg wr_rst, rd_rst;
+
+always #5 wr_clk = ~wr_clk;
+always #7 rd_clk = ~rd_clk;
+
+  top_multi_clk dut(.wr_clk(wr_clk),.rd_clk(rd_clk),.wr_rst(wr_rst), .rd_rst(rd_rst));
+  initial begin
+    $dumpfile("dump.vcd");
+    $dumpvars(0, multi_clk_tb);
+    wr_clk = 0;
+    rd_clk = 0;
+
+     wr_rst = 1;
+     rd_rst = 1;
+
+    #10 wr_rst = 0;
+    #15 rd_rst = 0;
+    #500 $finish;
+  end
+endmodule
+
+
+
+Step 3. Simulation Script
+
+a) Create the script file: run.sh
+#!/bin/bash
+# 1: Compile and build simulation with Verilator and enable tracing
+verilator --binary -j 0 -Wall \
+  top_multi_clk.v async_fifo.v block_a.v block_b.v multi_clk_tb.v \
+  --top multi_clk_tb --timing --CFLAGS "-std=c++20" --trace
+# 2: Navigate to object directory
+cd obj_dir || { echo "obj_dir not found"; exit 1; }
+# 3: Compile simulation binary
+make -f Vmulti_clk_tb.mk Vmulti_clk_tb || { echo "Compilation failed"; exit 1; }
+# 4: Run simulation
+./Vmulti_clk_tb || { echo "Simulation failed"; exit 1; }
+# 5: Launch GTKWave for waveform visualization
+gtkwave dump.vcd
+
+b) Make the script executable:
+chmod +x run.sh
+Step 4: Run the script (./run.sh) to perform compilation, simulation, and open the waveform.
+

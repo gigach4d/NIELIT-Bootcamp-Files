@@ -1,0 +1,102 @@
+Multi-Clock Domain Architectures: Clock Multiplexers and Clock Dividers
+
+1)  Design Code of Clock multiplexer:
+
+Create a file for Clock multiplexer: clk_mux.v
+
+// Clock multiplexer to select between two clock sources
+module clk_mux (
+  input clk0,
+  input clk1,
+  input sel, // select signal: 0 → clk0, 1 → clk1
+  output clk_out
+);
+  // Output assigned based on selection (no glitch handling)
+  assign clk_out = (sel == 1'b0)? clk0: clk1;
+endmodule
+Note: This is a simple assign-based mux. In real silicon, glitch-free muxing needs special handling.
+
+2) Clock divider:  
+
+Create a file named clk_divider.v
+// Clock divider to generate slower clock (divide-by-4 in this example)
+module clk_divider (
+  input clk_in,
+  input rst,
+  output reg clk_out
+);
+  reg [1:0] counter; // 2-bit counter to divide clock
+  always @(posedge clk_in or posedge rst) begin
+    if (rst) begin
+      counter <= 2'b0;
+      clk_out <= 0;
+    end else begin
+      counter <= counter + 1;
+      if (counter == 2'b11)
+        clk_out <= ~clk_out; // Toggle every 4 input clocks
+    end
+  end
+endmodule
+
+Step 3: Testbench to Verify the Design
+
+module multi_clk_tb;
+  reg clk_fast = 0;
+  reg clk_slow = 0;
+  reg rst = 1;
+  reg sel = 0;
+  wire muxed_clk;
+  wire clk_div4;
+
+  // Generate clk_fast = 10ns period
+  always #5 clk_fast = ~clk_fast;
+
+  // Generate clk_slow = 20ns period
+  always #10 clk_slow = ~clk_slow;
+
+  // Instantiate clock divider
+  clk_divider u_div (
+    .clk_in(clk_fast),
+    .rst(rst),
+    .clk_out(clk_div4)
+  );
+  // Instantiate clock multiplexer
+  clk_mux u_mux (
+    .clk0(clk_fast),
+    .clk1(clk_slow),
+    .sel(sel),
+    .clk_out(muxed_clk)
+  );
+  initial begin
+    $dumpfile("dump.vcd");
+    $dumpvars(0, multi_clk_tb);
+    // Release reset
+    #15 rst = 0;
+    // Toggle clock select after some time
+    #60 sel = 1;
+    #60 sel = 0;
+    #100 $finish;
+  end
+endmodule
+
+Step 4: Create Simulation Script
+a) Create script “run.sh”
+
+#!/bin/bash
+#1: Use Verilator to compile and generate simulation files
+verilator --binary -j 0 -Wall \
+  clk_mux.v clk_divider.v multi_clk_tb.v \
+  --top multi_clk_tb --timing --CFLAGS "-std=c++20" --trace
+
+#2: Move to the object directory
+cd obj_dir || { echo "obj_dir not found"; exit 1; }
+#3: Compile the simulation binary using make
+make -f Vmulti_clk_tb.mk Vmulti_clk_tb || { echo "Compilation failed"; exit 1; }
+#4: Run the simulation
+./Vmulti_clk_tb || { echo "Simulation failed"; exit 1; }
+#5: Open the waveform in GTKWave
+gtkwave dump.vcd
+
+b) Make the script executable:
+chmod +x run.sh
+c) Run the script (./run.sh) to perform compilation, simulation, and open the waveform.

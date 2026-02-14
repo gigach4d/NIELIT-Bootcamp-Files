@@ -1,0 +1,92 @@
+Demonstrating Clock Gating and Power Gating for Low Power SoC Design
+To demonstrate, through simulation, how clock gating reduces unnecessary switching activity and how power gating can fully shut off inactive digital blocks to save power in SoC designs.
+Design Code 
+1) Simple counter that always increments on every clock, regardless of need. No Power will be saved.
+module counter_baseline (
+  input  wire clk,
+  input  wire reset,
+  output reg [3:0] count
+);
+  always @(posedge clk or posedge reset) begin
+    if (reset)
+      count <= 0;           // Reset counter to 0
+    else
+      count <= count + 1;   // Always increment
+  end
+endmodule
+
+2) Counter with enable: Counter updates only when enable is high, demonstrating clock gating.
+module counter_clk_gate (
+  input  wire clk,
+  input  wire reset,
+  input  wire enable,        // Clock gate enable signal
+  output reg [3:0] count
+);
+
+  always @(posedge clk or posedge reset) begin
+    if (reset)
+      count <= 0;
+    else if (enable)         // Only increment when enabled
+      count <= count + 1;
+  end
+endmodule
+3) Simulated Power Gating: Simulates power gating by freezing counter updates when "power_on" is low.
+module counter_pwr_gate (
+  input  wire clk,
+  input  wire reset,
+  input  wire power_on,      // Simulated power control
+  output reg [3:0] count
+);
+  always @(posedge clk or posedge reset) begin
+    if (reset)
+      count <= 0;
+    else if (power_on)       // Only increment if "powered"
+      count <= count + 1;
+    // else retain last value (like powered-off block)
+  end
+endmodule
+ Testbench Code
+It drives the clock, reset, enable, and power signals and compares all three counters.
+Create a file: low_power_tb.v
+module low_power_tb;
+  reg clk = 0;
+  reg reset = 1;
+  reg enable = 0;
+  reg power_on = 0;
+  wire [3:0] count_base, count_clk_gate, count_pwr_gate;
+  // Clock generation (10ns period)
+  always #5 clk = ~clk;
+  // Instantiate baseline counter
+  counter_baseline u1 (
+    .clk(clk),
+    .reset(reset),
+    .count(count_base)
+  );
+  // Instantiate clock-gated counter
+  counter_clk_gate u2 (
+    .clk(clk),
+    .reset(reset),
+    .enable(enable),
+    .count(count_clk_gate)
+  );
+  // Instantiate power-gated counter
+  counter_pwr_gate u3 (
+    .clk(clk),
+    .reset(reset),
+    .power_on(power_on),
+    .count(count_pwr_gate)
+  );
+  initial begin
+    $dumpfile("dump.vcd");
+    $dumpvars(0, low_power_tb);
+    // Reset pulse
+    #10 reset = 0;
+    // All counters run for ten cycles
+    #10 enable = 1; power_on = 1;  // All active
+    #30 enable = 0;                // Clock-gated stops, baseline keeps going
+    #20 power_on = 0;              // Power-gated freezes
+    #20 enable = 1; power_on = 1;  // All active again
+    #40 $finish;
+  end
+endmodule
+

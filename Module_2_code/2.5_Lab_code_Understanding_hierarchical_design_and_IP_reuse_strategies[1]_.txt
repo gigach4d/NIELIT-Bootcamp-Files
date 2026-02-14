@@ -1,0 +1,102 @@
+Understanding Hierarchical Design and IP Reuse Strategies
+This lab introduces hierarchical design and IP reuse are foundational for efficient and scalable RTL development, enabling modular integration of verified blocks and quick adaptation to new requirements.
+
+1) Design Code of Adder: Reusable Parameterized Adder IP
+
+Create a file for adder :  adder.v
+// Simple parameterized adder
+module adder #(parameter WIDTH = 8) (
+  input [WIDTH-1:0] a,     // First operand
+  input [WIDTH-1:0] b,     // Second operand
+  output [WIDTH-1:0] sum   // Result
+);
+assign sum = a + b;
+endmodule
+
+b) Counter - Reusable Synchronous Counter IP
+Create a file for counter: counter.v
+
+// Synchronous up-counter with enable and reset
+module counter #(parameter WIDTH = 8) (
+  input clk,                     // Clock input
+  input rst,                     // Asynchronous reset
+  input en,                      // Enable increment
+  output reg [WIDTH-1:0] count   // Count output
+);
+  always @(posedge clk or posedge rst) begin
+    if (rst)
+      count <= 0;
+    else if (en)
+      count <= count + 1;
+  end
+endmodule
+
+c. Create a top module for Hierarchical Integration: top_module.v
+// Top-level module instantiating counter and adder IPs
+module top_module (
+  input clk,             // Clock input
+  input rst,             // Reset input
+  input en,              // Enable for counter
+  input [7:0] ext_input, // External value to add
+  output [7:0] result    // Summed result (counter + ext_input)
+);
+  wire [7:0] count;
+  // Instantiate counter IP
+  counter u_counter (
+    .clk(clk),
+    .rst(rst),
+    .en(en),
+    .count(count)
+  );
+  // Instantiate adder IP
+  adder u_adder (
+    .a(count),
+    .b(ext_input),
+    .sum(result)
+  );
+endmodule
+
+d.Create a testbench: tb_top_module.v
+// Testbench for hierarchical top module
+module tb_top_module;
+  reg clk = 0;
+  reg rst = 1;
+  reg en = 0;
+  reg [7:0] ext_input = 8'd10;
+  wire [7:0] result;
+  // 10ns clock generation
+  always #5 clk = ~clk;
+  // Instantiate top-level DUT
+  top_module dut (
+    .clk(clk),
+    .rst(rst),
+    .en(en),
+    .ext_input(ext_input),
+    .result(result)
+  );
+  initial begin
+    $dumpfile("dump.vcd");        // Output file for GTKWave
+    $dumpvars(0, tb_top_module);  // Dump all signals
+    #12 rst = 0;                  // Release reset
+    #5  en = 1;                   // Enable counter
+    #100 en = 0;                  // Stop counting after 100ns
+    #20  $finish;                 // End simulation
+  end
+
+endmodule
+
+Step 3: Prepare Simulation Script: run.sh
+
+#!/bin/bash
+#1: Run Verilator to compile and generate simulation files
+verilator --binary -j 0 -Wall \
+  adder.v counter.v top_module.v tb_top_module.v \
+  --top tb_top_module --timing --CFLAGS "-std=c++20" --trace
+#2: Enter the object directory
+cd obj_dir || { echo "obj_dir not found"; exit 1; }
+#3: Compile the simulation binary
+make -f Vtb_top_module.mk Vtb_top_module || { echo "Compilation failed"; exit 1; }
+#4: Run the simulation
+./Vtb_top_module || { echo "Simulation failed"; exit 1; }
+#5: Open the waveform in GTKWave
+gtkwave dump.vcd

@@ -1,0 +1,101 @@
+Create a file for design : simple_timer.v
+
+// A basic programmable countdown timer
+`timescale 1ns/1ps
+module simple_timer #(
+    parameter WIDTH = 8   // Width of timer counter
+)(
+    input  wire              clk,       // System clock
+    input  wire              rst,       // Synchronous reset
+    input  wire              start,     // Start the timer
+    input  wire [WIDTH-1:0]  load_val,  // Initial countdown value
+    output reg               done       // High when timer reaches zero
+);
+    reg [WIDTH-1:0] count;   // Timer counter register
+    reg             running; // Indicates timer is active
+    always @(posedge clk or posedge rst) begin
+        if (rst) begin
+            count   <= 0;
+            running <= 0;
+            done    <= 0;
+        end else begin
+            if (start) begin
+                // Load the preset value and start counting
+                count   <= load_val;
+                running <= 1;
+                done    <= 0;
+            end else if (running) begin
+                if (count > 0) begin
+                    count <= count - 1;   // Decrement counter
+                end else begin
+                    running <= 0;         // Stop timer
+                    done    <= 1;         // Raise done signal
+                end
+            end
+        end
+    end
+endmodule
+
+Step 3: Create Testbench File
+
+3.1: Create a file for testbench : simple_timer_tb.v
+`timescale 1ns/1ps
+module simple_timer_tb;
+
+    reg clk = 0;
+    reg rst = 1;
+    reg start = 0;
+    reg [7:0] load_val = 0;
+    wire done;
+
+    // Instantiate Timer DUT
+    simple_timer #(.WIDTH(8)) uut (
+        .clk(clk),
+        .rst(rst),
+        .start(start),
+        .load_val(load_val),
+        .done(done)
+    );
+
+    // Clock generation (10ns period)
+    always #5 clk = ~clk;
+
+    initial begin
+        $dumpfile("simple_timer.vcd");
+        $dumpvars(0, simple_timer_tb);
+
+        // Reset
+        #10 rst = 0;
+
+        // Start timer with value 5
+        #5  load_val = 8'd5; start = 1;
+        #10 start = 0;
+
+        // Wait for timer to finish
+        #100;
+
+        // Start timer again with value 3
+        #5  load_val = 8'd3; start = 1;
+        #10 start = 0;
+
+        #50 $finish;
+    end
+endmodule
+
+Step 4: Simulation Script
+
+4.1: Use the following command to simulate:
+verilator --binary -j 0 -Wall simple_timer.v simple_timer_tb.v \
+--top-module simple_timer_tb --timing \
+--CFLAGS "-std=c++20 -fcoroutines" --trace
+4.2: If any error is available, resolve it.
+4.3: After simulation, a new directory obj_dir will be created by the tool. Check it using the command:
+ls
+4.4: Open obj_dir:
+cd obj_dir
+4.5: Use the following command to build the executable:
+make -f Vsimple_timer_tb.mk Vsimple_timer_tb
+4.6: A new executable with the name Vsimple_timer_tb will be created.
+4.7: Use the following command to run the simulation:
+./Vsimple_timer_tb
+4.8: Open the wave using the command: gtkwave simple_timer.vcd

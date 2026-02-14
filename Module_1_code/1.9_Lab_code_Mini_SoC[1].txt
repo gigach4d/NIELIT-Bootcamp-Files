@@ -1,0 +1,126 @@
+Integrating Multiple IPs into a Mini-SoC
+
+1: 4-bit Counter IP
+
+1.1: File for counter IP: counter.v
+// 4-bit synchronous counter
+module counter (
+  input clk,
+  input rst,
+  output reg [3:0] count
+);
+  always @(posedge clk) begin
+    if (rst)
+      count <= 0;
+    else
+      count <= count + 1;
+  end
+endmodule
+
+2: 2-bit ALU IP (Add / Subtract)
+
+2.1 : File for ALU IP : alu.v
+// Simple 2-bit ALU with add and subtract
+module alu (
+  input [1:0] a,
+  input [1:0] b,
+  input sel,             // 0: ADD, 1: SUB
+  output reg [1:0] result
+);
+  always @(*) begin
+    case (sel)
+      1'b0: result = a + b;
+      1'b1: result = a - b;
+    endcase
+  end
+endmodule
+
+
+
+
+
+
+3: 2x1 Multiplexer IP
+
+3.1 : File for Multiplexer IP: mux2x1.v
+// 2-bit 2:1 MUX
+module mux2x1 (
+  input [1:0] in0,
+  input [1:0] in1,
+  input sel,
+  output [1:0] out
+);
+  assign out = sel ? in1 : in0;
+endmodule
+
+4: SoC Top-Level Module
+
+4.1: File for SoC Top: mini_soc.v
+// Integrates counter, ALU, and MUX
+module mini_soc (
+  input clk,
+  input rst,
+  input alu_sel,
+  input mux_sel,
+  output [1:0] soc_out
+);
+  wire [3:0] count;
+  wire [1:0] alu_out;
+  // Instantiate IP blocks
+  counter u_counter (.clk(clk), .rst(rst), .count(count));
+  alu     u_alu (.a(count[3:2]), .b(count[1:0]), .sel(alu_sel), .result(alu_out));
+  mux2x1  u_mux (.in0(count[3:2]), .in1(alu_out), .sel(mux_sel), .out(soc_out));
+endmodule
+
+5: Testbench for SoC
+Develop a testbench that provides stimulus for clock, reset, and control signals to the SoC, then records outputs.
+5.1: Testbench file for SoC: mini_soc_tb.v
+module mini_soc_tb;
+  reg clk = 0;
+  reg rst = 1;
+  reg alu_sel = 0;
+  reg mux_sel = 0;
+  wire [1:0] soc_out;
+  always #5 clk = ~clk;
+  mini_soc dut (
+    .clk(clk),
+    .rst(rst),
+    .alu_sel(alu_sel),
+    .mux_sel(mux_sel),
+    .soc_out(soc_out)
+  );
+  initial begin
+    $dumpfile("dump.vcd");
+    $dumpvars(0, mini_soc_tb);
+    // Reset release
+    #10 rst = 0;
+    // Stimulate ALU and MUX selections
+    #20 alu_sel = 1;
+    #30 mux_sel = 1;
+    #40 alu_sel = 0;
+    #20 mux_sel = 0;
+    #50 $finish;
+  end
+endmodule
+
+a)	Create a file for script : run.sh
+
+#!/bin/bash
+# Use Verilator to compile and generate simulation files
+verilator --binary -j 0 -Wall \
+  counter.v alu.v mux2x1.v mini_soc.v mini_soc_tb.v \
+  --top mini_soc_tb --timing --CFLAGS "-std=c++20" --trace
+# Step 2: Enter the object directory
+cd obj_dir || { echo "obj_dir not found"; exit 1; }
+# Step 3: Compile simulation binary
+make -f Vmini_soc_tb.mk Vmini_soc_tb || { echo "Compilation failed"; exit 1; }
+# Step 4: Run the simulation
+./Vmini_soc_tb || { echo "Simulation failed"; exit 1; }
+# Step 5: Launch GTKWave to view the waveform
+gtkwave dump.vcd
+
+b)	Make the script executable: chmod +x run.sh
+c)	Run the simulation and waveform viewer with: ./run.sh
+
+
+

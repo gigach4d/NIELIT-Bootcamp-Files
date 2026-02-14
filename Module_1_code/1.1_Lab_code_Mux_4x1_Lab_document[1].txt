@@ -1,0 +1,216 @@
+// 4x1 Multiplexer - Dataflow Modelling using logic equation
+
+
+`timescale 1ns/1ps // Time unit = 1ns, time precision = 1ps
+module mux4x1_dataflow(
+  input [3:0] in,          // 4-bit input lines
+  input [1:0] sel,         // 2-bit select lines
+  output out               // Output of the MUX
+);
+  // Dataflow modeling of 4:1 multiplexer
+  assign out = (~sel[1] & ~sel[0] & in[0]) |
+               (~sel[1] &  sel[0] & in[1]) |
+               ( sel[1] & ~sel[0] & in[2]) |
+               ( sel[1] &  sel[0] & in[3]);
+endmodule
+
+
+// Testbench for 4x1 mux - Dataflow Modeling
+`timescale 1ns/1ps
+module mux4x1_dataflow_tb;
+  // Declare testbench variables
+  reg [3:0] in;       // 4-bit input vector
+  reg [1:0] sel;      // 2-bit selector
+  wire out;           // Output from the multiplexer
+  // Instantiate the Unit Under Test (UUT)
+  mux4x1_dataflow uut (
+    .in(in),
+    .sel(sel),
+    .out(out)
+  );
+  // Test stimulus block
+  initial begin
+    $display("DATAFLOW 4x1 MUX TEST");
+    $display("----------------------");
+    $display("SEL | IN     | OUT");
+    $display("----------------------");
+    // Set input values
+    in = 4'b1010; // You can change this pattern to test more combinations
+    // Apply all select line combinations with delay
+    sel = 2'b00; #10 $display("%b  | %b |  %b", sel, in, out);
+    sel = 2'b01; #10 $display("%b  | %b |  %b", sel, in, out);
+    sel = 2'b10; #10 $display("%b  | %b |  %b", sel, in, out);
+    sel = 2'b11; #10 $display("%b  | %b |  %b", sel, in, out);
+    $finish; // End simulation
+  end
+initial begin
+	$dumpfile("mux4x1_dataflow.vcd");
+	$dumpvars(0, mux4x1_dataflow_tb);	
+end
+endmodule
+
+//Simulate the Design Using Verilator
+1: Run Verilator to compile the design and testbench
+verilator --binary -j 0 -Wall mux4x1_dataflow.v mux4x1_dataflow_tb.v --top mux4x1_dataflow_tb --timing --CFLAGS "-std=c++20" --trace
+2: If any errors occur, resolve them and rerun the command.
+
+3: After successful compilation, a new directory obj_dir will be created 
+ls
+4: Navigate into the obj_dir
+cd obj_dir
+5: Build the simulation binary
+make -f Vmux4x1_dataflow_tb.mk Vmux4x1_dataflow_tb
+6: After compilation, an executable named Vmux4x1_dataflow_tb will be generated
+7: Run the simulation 
+./Vmux4x1_dataflow_tb
+8: Observe the simulation output in the terminal
+
+
+// ================================================================
+
+
+// 4x1 Multiplexer - Behavioral Modeling
+// Implements case statement based selection logic
+`timescale 1ns/1ps  // Time unit = 1ns, time precision = 1ps
+module mux4x1_behavioral (
+  input [3:0] in,       // 4-bit input bus
+  input [1:0] sel,      // 2-bit select input
+  output reg out        // Single output bit
+);
+  always @(*) begin          // Combinational logic block
+    case (sel)
+      2'b00: out = in[0];                // Select input 0
+      2'b01: out = in[1];                // Select input 1
+      2'b10: out = in[2];                // Select input 2
+      2'b11: out = in[3];                // Select input 3
+      default: out = 1'bx;               // Undefined case
+    endcase
+  end
+endmodule
+
+// Testbench for 4x1 mux - Behavioral Modeling
+`timescale 1ns/1ps  // Time unit = 1ns, time precision = 1ps
+module mux4x1_behavioral_tb;
+  // Declare testbench variables
+  reg [3:0] in;       // 4-bit input vector
+  reg [1:0] sel;      // 2-bit selector
+  wire out;           // Output from the multiplexer
+  // Instantiate the Unit Under Test (UUT)
+  mux4x1_behavioral uut (
+    .in(in),
+    .sel(sel),
+    .out(out)
+  );
+  // Test stimulus block
+  initial begin
+    $display("BEHAVIORAL 4x1 MUX TEST");
+    $display("----------------------");
+    $display("SEL | IN     | OUT");
+    $display("----------------------");
+    in = 4'b1010;  // Input pattern
+    sel = 2'b00; #10 $display("%b  | %b |  %b", sel, in, out);
+    sel = 2'b01; #10 $display("%b  | %b |  %b", sel, in, out);
+    sel = 2'b10; #10 $display("%b  | %b |  %b", sel, in, out);
+    sel = 2'b11; #10 $display("%b  | %b |  %b", sel, in, out);
+    $finish;       // End simulation
+  end
+  // Dump waveform data for GTKWave
+  initial begin
+    $dumpfile("mux4x1_behavioral.vcd");     // VCD output file
+    $dumpvars(0, mux4x1_behavioral_tb);  // Dump all variables in this module
+  end
+endmodule
+
+// Simulate the Design Using Verilator
+1: Run Verilator to compile the design and testbench
+verilator --binary -j 0 -Wall mux4x1_behavioral.v mux4x1_behavioral_tb.v --top mux4x1_behavioral_tb --timing --CFLAGS "-std=c++20" --trace
+2: If any errors occur, resolve them and rerun the command.
+3: After successful compilation, a new directory obj_dir will be created 
+ls
+4: Navigate into the obj_dir
+cd obj_dir
+5: Build the simulation binary
+make -f Vmux4x1_behavioral_tb.mk Vmux4x1_behavioral_tb
+6: After compilation, an executable named Vmux4x1_behavioral_tb will be generated
+7: Run the simulation 
+./Vmux4x1_behavioral_tb
+8: Observe the simulation output in the terminal
+
+//==========================================================================
+
+// 4x1 Multiplexer - Structural Modeling using basic gates (AND, OR, NOT)
+`timescale 1ns/1ps  // Time unit = 1ns, time precision = 1ps
+module mux4x1_structural (
+  input [3:0] in,          // 4-bit input vector
+  input [1:0] sel,         // 2-bit select input
+  output out               // Single-bit output
+);
+  wire not_s0, not_s1;     // Inverted select lines
+  wire and0, and1, and2, and3; // Intermediate AND outputs
+  // NOT gates to generate complement of select lines
+  not (not_s0, sel[0]);
+  not (not_s1, sel[1]);
+  // AND logic for each selection condition
+  and (and0, not_s1, not_s0, in[0]); // sel = 00 → in[0]
+  and (and1, not_s1, sel[0], in[1]); // sel = 01 → in[1]
+  and (and2, sel[1], not_s0, in[2]); // sel = 10 → in[2]
+  and (and3, sel[1], sel[0], in[3]); // sel = 11 → in[3]
+  // OR all partial outputs to generate final output
+  or (out, and0, and1, and2, and3);
+endmodule
+
+
+// Testbench for 4x1 Multiplexer - Structural Style
+`timescale 1ns/1ps  // Time unit = 1ns, time precision = 1ps
+module mux4x1_structural_tb;
+  reg [3:0] in;        // 4-bit input vector
+  reg [1:0] sel;       // 2-bit select line
+  wire out;            // Output of the multiplexer
+  // Instantiate the Unit Under Test (UUT)
+  mux4x1_structural uut (
+    .in(in),
+    .sel(sel),
+    .out(out)
+  );
+  // Stimulus and display block
+  initial begin
+    // Display header for clarity in simulation output
+    $display("STRUCTURAL MUX4x1 TEST");
+    $display("SEL | IN     | OUT");
+    $display("---------------------");
+    in = 4'b1101;  // Test input pattern
+    // Apply select signals and print output
+    sel = 2'b00; #10 $display("%b  | %b |  %b", sel, in, out);
+    sel = 2'b01; #10 $display("%b  | %b |  %b", sel, in, out);
+    sel = 2'b10; #10 $display("%b  | %b |  %b", sel, in, out);
+    sel = 2'b11; #10 $display("%b  | %b |  %b", sel, in, out);
+    $finish;      // End simulation
+  end
+  // VCD file generation for waveform viewing
+  initial begin
+    $dumpfile("mux4x1_structural.vcd"); // VCD output filename
+    $dumpvars(0, mux4x1_structural_tb); // Dump all variables in the testbench
+  end
+endmodule
+
+// Simulate the Design Using Verilator
+1: Run Verilator to compile the design and testbench
+verilator --binary -j 0 -Wall mux4x1_structural.v mux4x1_structural_tb.v --top mux4x1_structural_tb --timing --CFLAGS "-std=c++20" --trace
+2: If any errors occur, resolve them and rerun the command.
+3: After successful compilation, a new directory obj_dir will be created 
+ls
+4: Navigate into the obj_dir
+cd obj_dir
+5: Build the simulation binary
+make -f Vmux4x1_structural_tb.mk Vmux4x1_structural_tb
+6: After compilation, an executable named Vmux4x1_structural_tb will be generated
+7: Run the simulation 
+./Vmux4x1_structural_tb
+8: Observe the simulation output in the terminal
+
+
+
+
+
+
+
